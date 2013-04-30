@@ -65,8 +65,11 @@ function canvasClicked(e)
 	//Get which cell was clicked
 	var relX = e.offsetX;
 	var relY = e.offsetY;
+
+	var begin = GRID_SIZE / 2 - level;
+	var end = GRID_SIZE / 2 + level;
 	//check that a cell has been clicked
-	if (relX < BOX_WIDTH && relX >= 0 && relY < BOX_HEIGHT && relY >= 0)
+	if (relX < (BOX_WIDTH / GRID_SIZE) * end && relX >= (BOX_WIDTH / GRID_SIZE) * begin && relY < (BOX_HEIGHT / GRID_SIZE) * end && relY >= (BOX_HEIGHT / GRID_SIZE) * begin)
 	{
 		var cellRow = Math.floor((relX / BOX_WIDTH) * GRID_SIZE);
 		var cellHeight = Math.floor((relY / BOX_HEIGHT) * GRID_SIZE);
@@ -125,12 +128,11 @@ function completed()
 	var begin = GRID_SIZE / 2 - level;
 	var end = GRID_SIZE / 2 + level;
 
-	var adjacents = [[-1, -1],
-                        [-1, 1],
-                        [1, -1],
-                        [1, 1]];
+	var adjacents = [[-1, 0],
+                        [1, 0],
+                        [0, -1],
+                        [0, 1]];
 
-	var colour1 = grid[begin][begin];
 	for (var x = begin; x < end; x++)
 	{
 		for (var y = begin; y < end; y++)
@@ -144,7 +146,7 @@ function completed()
 				{
 					//Check if adjacent block follows the rules
 					var cell2 = grid[x2][y2];
-					if (Math.abs(cell2.value - cell.value) > 1)
+					if (!(loop(cell2.value, 1, GRID_COLOURS.length) == cell.value || loop(cell2.value, -1, GRID_COLOURS.length) == cell.value || cell2.value == cell.value))
 					{
 						return false;
 					}
