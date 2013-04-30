@@ -1,0 +1,9 @@
+This game (Cell) is licensed under the Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License
+(http://creativecommons.org/licenses/by-nc-sa/3.0/deed.en_GB).
+
+If you modify and share this game, please attribute the original code to me as follows (although you don't have to):
+
+Based on Cell by Nicholas Udell.
+See more of Nicholas Udell's work here: https://github.com/nickudell
+
+Also, I'd love it if you sent me an email at nick DOT udell AT gmail DOT com to tell me about it!
