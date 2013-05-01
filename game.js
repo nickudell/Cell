@@ -176,16 +176,12 @@ function awaitAssets()
 		context.fillRect(barX, barY, BAR_WIDTH * (assets.assetsLoaded() / assets.totalAssets()), BAR_HEIGHT);
 		var loadText = "LOADING";
 		var numPips = 0;
-		for (var i = FPS; i < tick; i += FPS)
+		for (var i = 0; i < tick; i++)
 		{
 			loadText += ".";
 			numPips++;
 		}
-		if (numPips != messageTick)
-		{
-			messageTick = numPips;
-			message = loop(message, 1, loadingStrings.length);
-		}
+		message = loop(message, 1, loadingStrings.length);
 		context.save();
 		context.textAlign = "left";
 		context.font = "64pt Open Sans Condensed";
@@ -197,7 +193,8 @@ function awaitAssets()
 		context.font = "16pt Roboto";
 		context.fillText(loadingStrings[message], CANVAS_WIDTH / 2, barY + 96);
 		context.restore();
-		loopTimeout = setTimeout(awaitAssets, 1000 / FPS);
+		tick = loop(tick, 1, 4);
+		loopTimeout = setTimeout(awaitAssets, 2000);
 	}
 };
 
@@ -243,8 +240,10 @@ var Tick = function()
 	var now = Date.now();
 	var deltaTime = now - prevTime;
 	prevTime = now;
-
-	Clear('FFF');
+	var grd = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+	grd.addColorStop(0, '005');
+	grd.addColorStop(1, '05F');
+	Clear(grd);
 	Update(deltaTime);
 
 	if (isPlaying)
