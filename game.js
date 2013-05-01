@@ -241,8 +241,8 @@ var Tick = function()
 	var deltaTime = now - prevTime;
 	prevTime = now;
 	var grd = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-	grd.addColorStop(0, '005');
-	grd.addColorStop(1, '05F');
+	grd.addColorStop(0, 'FFF');
+	grd.addColorStop(1, 'DDD');
 	Clear(grd);
 	Update(deltaTime);
 
@@ -417,11 +417,16 @@ function cell(solution)
 	this.value = this.options[optionIndex];
 	this.locked = (this.options.length == 1)
 	this.certain = false;
+	this.padding = 4;
 
 
 	this.draw = function(x, y, width, height, solution)
 	{
 		context.save();
+		context.shadowColor = 'rgba(0,0,0,0.25)';
+		context.shadowOffsetX = 8;
+		context.shadowOffsetY = 8;
+		context.shadowBlur = 16;
 		if (solution)
 		{
 			context.fillStyle = getFillStyle(GRID_COLOURS[this.solution],
@@ -437,7 +442,10 @@ function cell(solution)
 			width);
 		}
 
-		context.fillRect(x, y, width, height);
+		context.fillRect(x + this.padding, y + this.padding, width - 2 * this.padding, height - 2 * this.padding);
+		context.lineWidth = 1;
+		context.strokeStyle = '888';
+		context.strokeRect(x + this.padding, y + this.padding, width - 2 * this.padding, height - 2 * this.padding);
 		if (this.options.length == 1)
 		{
 			context.shadowColor = 'rgba(0,0,0,0.65)';
@@ -549,11 +557,17 @@ var Draw = function()
 	var cellWidth = BOX_WIDTH / GRID_SIZE;
 	var cellHeight = BOX_HEIGHT / GRID_SIZE;
 
-	var grd = context.createLinearGradient(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
+	/*var grd = context.createLinearGradient(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
 	grd.addColorStop(0, '222');
-	grd.addColorStop(0.5, '555');
-	context.fillStyle = grd;
+	grd.addColorStop(0.5, '555');*/
+	context.save();
+	context.shadowColor = 'rgba(0,0,0,0.25)';
+	context.shadowOffsetX = 16;
+	context.shadowOffsetY = 16;
+	context.shadowBlur = 32;
+	context.fillStyle = 'FFF';
 	context.fillRect(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH, BOX_HEIGHT);
+	context.restore();
 
 	//draw cells
 
@@ -570,7 +584,7 @@ var Draw = function()
 		}
 	}
 
-	//draw grid
+	/*//draw grid
 	context.save();
 	context.shadowColor = '444';
 	context.shadowOffsetX = 2;
@@ -603,7 +617,7 @@ var Draw = function()
 	context.lineTo(BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
 	context.stroke();
 	context.restore();
-
+*/
 	//Add colour guide:
 
 	var guideX = BOX_MARGIN + BOX_WIDTH + 16;
