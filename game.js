@@ -1,9 +1,10 @@
 //Canvas properties
-var CANVAS_WIDTH = 704;
-var CANVAS_HEIGHT = 704;
+var CANVAS_WIDTH = 720;
+var CANVAS_HEIGHT = 720;
 
 var BOX_WIDTH = 640;
 var BOX_HEIGHT = 640;
+var BOX_MARGIN = 16;
 
 var canvas;
 var context;
@@ -16,17 +17,47 @@ var prevTime = Date.now();
 
 var timeString;
 
-var GRID_SIZE = 16;
+var GRID_SIZE;
+
+var CELL_MARGIN = 4;
 
 var grid = [];
 
-var GRID_COLOURS = [[255, 0, 0],
+var COLOURS = [[255, 0, 0],
                     [255, 128, 0],
                     [255, 255, 0],
-                    [0, 255, 0],
+                    [64, 150, 0],
+                    [0, 255, 64],
+                    [0, 255, 255],
                     [0, 128, 255],
+                    [0, 0, 255],
                     [128, 0, 255],
-                    [255, 0, 255]];
+                    [255, 0, 255],
+                    ];
+
+var difficulty = 0;
+var GRID_COLOURS;
+
+switch (difficulty)
+{
+	case 0:
+		//easy
+		GRID_COLOURS = [COLOURS[0], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8]];
+		GRID_SIZE = 8;
+		break;
+	case 1:
+		//medium
+		GRID_COLOURS = [COLOURS[0], COLOURS[1], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8], COLOURS[9]];
+		var GRID_SIZE = 16;
+		break;
+	case 2:
+		//hard
+		GRID_COLOURS = COLOURS;
+		CELL_MARGIN = 2;
+		var GRID_SIZE = 32;
+		break;
+}
+
 
 var imageURLS = ["images/tick.png"];
 
@@ -43,11 +74,30 @@ var loadingStrings = ["Doing something or other.",
                         "Establishing link to the thunder cloud.",
                         "Regretting.",
                         "Saying what I'm doing.",
-                        "Splining reticulates."]
+                        "Splining reticulates.",
+                        "Selling your details to large corporations.",
+                        "Rubbing two dollar bills together to start a fire.",
+                        "Having a snack.",
+                        "Hitting nails with things that look like hammers.",
+                        "Hitting hammers with nails.",
+                        "Making the best Moroccan tagine you've ever seen.",
+                        "Crying and watching Rom Coms.",
+                        "Manscaping.",
+                        "Solving world hunger.",
+                        "Don't tell Notch or he'll be mad."]
 var winStrings = ["You are the awesomest. Is that a word? Awesomest?",
-                         "Way to go there, buddy.", "At long last, your [INSERT FATHER FIGURE HERE] is proud.",
+                        "Way to go there, buddy.",
+                        "At long last, your [INSERT FATHER FIGURE HERE] is proud.",
                         "Son and/or daughter, I am appoint.",
-                        "I guess you can go about your life now, huh?."]
+                        "I guess you can go about your life now, huh?.",
+                        "They should make caffeine that you can breath.",
+                        "If you start seeing a lot of coloured boxes in your dreams. My bad.",
+                        "This one's going on the fridge.",
+                        "Tell your friends! Have fewer friends!",
+                        "You should celebrate by eating like a whole jar of mayonnaise.",
+                        "The sunlight, it burns!",
+                        "While you were playing this, the zombies won. Sorry.",
+                        "Excelsior!"]
 var icons = [];
 var message = Math.floor(Math.random() * loadingStrings.length);
 
@@ -129,16 +179,12 @@ function awaitAssets()
 		context.fillRect(barX, barY, BAR_WIDTH * (assets.assetsLoaded() / assets.totalAssets()), BAR_HEIGHT);
 		var loadText = "LOADING";
 		var numPips = 0;
-		for (var i = FPS; i < tick; i += FPS)
+		for (var i = 0; i < tick; i++)
 		{
 			loadText += ".";
 			numPips++;
 		}
-		if (numPips != messageTick)
-		{
-			messageTick = numPips;
-			message = loop(message, 1, loadingStrings.length);
-		}
+		message = loop(message, 1, loadingStrings.length);
 		context.save();
 		context.textAlign = "left";
 		context.font = "64pt Open Sans Condensed";
@@ -150,9 +196,8 @@ function awaitAssets()
 		context.font = "16pt Roboto";
 		context.fillText(loadingStrings[message], CANVAS_WIDTH / 2, barY + 96);
 		context.restore();
-		loopTimeout = setTimeout(awaitAssets, 1000 / FPS);
-
-
+		tick = loop(tick, 1, 4);
+		loopTimeout = setTimeout(awaitAssets, 2000);
 	}
 };
 
@@ -161,10 +206,10 @@ function getCell(mouseX, mouseY)
 {
 	var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
 	var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
-	if (mouseX < (BOX_WIDTH / GRID_SIZE) * end && mouseX >= (BOX_WIDTH / GRID_SIZE) * begin && mouseY < (BOX_HEIGHT / GRID_SIZE) * end && mouseY >= (BOX_HEIGHT / GRID_SIZE) * begin)
+	if (mouseX < BOX_MARGIN + (BOX_WIDTH / GRID_SIZE) * end && mouseX >= BOX_MARGIN + (BOX_WIDTH / GRID_SIZE) * begin && mouseY < BOX_MARGIN + (BOX_HEIGHT / GRID_SIZE) * end && mouseY >= BOX_MARGIN + (BOX_HEIGHT / GRID_SIZE) * begin)
 	{
-		var cellRow = Math.floor((mouseX / BOX_WIDTH) * GRID_SIZE);
-		var cellColumn = Math.floor((mouseY / BOX_HEIGHT) * GRID_SIZE);
+		var cellRow = Math.floor(((mouseX - BOX_MARGIN) / BOX_WIDTH) * GRID_SIZE);
+		var cellColumn = Math.floor(((mouseY - BOX_MARGIN) / BOX_HEIGHT) * GRID_SIZE);
 		return grid[cellRow][cellColumn];
 	}
 	else
@@ -198,11 +243,9 @@ var Tick = function()
 	var now = Date.now();
 	var deltaTime = now - prevTime;
 	prevTime = now;
-
-	var grd = context.createLinearGradient(0, 0, 0, BOX_HEIGHT);
-	grd.addColorStop(0, '222');
-	grd.addColorStop(0.5, '555');
-
+	var grd = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+	grd.addColorStop(0, 'FFF');
+	grd.addColorStop(1, 'DDD');
 	Clear(grd);
 	Update(deltaTime);
 
@@ -382,6 +425,10 @@ function cell(solution)
 	this.draw = function(x, y, width, height, solution)
 	{
 		context.save();
+		context.shadowColor = 'rgba(0,0,0,0.25)';
+		context.shadowOffsetX = 8;
+		context.shadowOffsetY = 8;
+		context.shadowBlur = 16;
 		if (solution)
 		{
 			context.fillStyle = getFillStyle(GRID_COLOURS[this.solution],
@@ -397,7 +444,10 @@ function cell(solution)
 			width);
 		}
 
-		context.fillRect(x, y, width, height);
+		context.fillRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
+		context.lineWidth = 1;
+		context.strokeStyle = '888';
+		context.strokeRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
 		if (this.options.length == 1)
 		{
 			context.shadowColor = 'rgba(0,0,0,0.65)';
@@ -509,19 +559,17 @@ var Draw = function()
 	var cellWidth = BOX_WIDTH / GRID_SIZE;
 	var cellHeight = BOX_HEIGHT / GRID_SIZE;
 
-	var grd = context.createLinearGradient(0, BOX_HEIGHT, 0, CANVAS_HEIGHT);
-	grd.addColorStop(0, 'FFF');
-	grd.addColorStop(0.4, 'FFE');
-	grd.addColorStop(0.6, 'DDC');
-	context.fillStyle = grd;
-	context.fillRect(0, BOX_HEIGHT, CANVAS_WIDTH, CANVAS_HEIGHT - BOX_HEIGHT);
-
-	grd = context.createLinearGradient(BOX_WIDTH, 0, CANVAS_WIDTH, 0);
-	grd.addColorStop(0, 'FFF');
-	grd.addColorStop(0.4, 'FFE');
-	grd.addColorStop(0.6, 'DDC');
-	context.fillStyle = grd;
-	context.fillRect(BOX_WIDTH, 0, CANVAS_WIDTH - BOX_WIDTH, CANVAS_HEIGHT - 64);
+	/*var grd = context.createLinearGradient(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
+	grd.addColorStop(0, '222');
+	grd.addColorStop(0.5, '555');*/
+	context.save();
+	context.shadowColor = 'rgba(0,0,0,0.25)';
+	context.shadowOffsetX = 16;
+	context.shadowOffsetY = 16;
+	context.shadowBlur = 32;
+	context.fillStyle = 'FFF';
+	context.fillRect(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH, BOX_HEIGHT);
+	context.restore();
 
 	//draw cells
 
@@ -534,11 +582,11 @@ var Draw = function()
 		for (var b = begin; b < end; b++)
 		{
 			var cell = grid[a][b];
-			cell.draw(a * cellWidth, b * cellHeight, cellWidth, cellHeight, showSolution);
+			cell.draw(BOX_MARGIN + a * cellWidth, BOX_MARGIN + b * cellHeight, cellWidth, cellHeight, showSolution);
 		}
 	}
 
-	//draw grid
+	/*//draw grid
 	context.save();
 	context.shadowColor = '444';
 	context.shadowOffsetX = 2;
@@ -548,29 +596,33 @@ var Draw = function()
 	context.lineWidth = 3;
 	for (var i = 1; i < GRID_SIZE; i++)
 	{
-		var x = cellWidth * i;
-		var y = cellHeight * i;
+		var x = BOX_MARGIN + cellWidth * i;
+		var y = BOX_MARGIN + cellHeight * i;
 
 		context.beginPath();
-		context.moveTo(x, 0);
-		context.lineTo(x, BOX_HEIGHT);
+		context.moveTo(x, BOX_MARGIN);
+		context.lineTo(x, BOX_HEIGHT + BOX_MARGIN);
 		context.stroke();
 
 		context.beginPath();
-		context.moveTo(0, y);
-		context.lineTo(BOX_WIDTH, y);
+		context.moveTo(+BOX_MARGIN, y);
+		context.lineTo(BOX_WIDTH + BOX_MARGIN, y);
 		context.stroke();
 	}
-	var y = cellHeight * GRID_SIZE;
 	context.beginPath();
-	context.moveTo(0, y);
-	context.lineTo(BOX_WIDTH, y);
+	context.moveTo(BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
+	context.lineTo(BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
+	context.stroke();
+
+	context.beginPath();
+	context.moveTo(BOX_WIDTH + BOX_MARGIN, +BOX_MARGIN);
+	context.lineTo(BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
 	context.stroke();
 	context.restore();
-
+*/
 	//Add colour guide:
 
-	var guideX = BOX_WIDTH + 16;
+	var guideX = BOX_MARGIN + BOX_WIDTH + 16;
 	var guideY = 16;
 	context.strokeStyle = '000';
 	context.lineWidth = 2;
@@ -594,11 +646,14 @@ var Draw = function()
 				context.strokeStyle = '000';
 				context.lineWidth = 2;
 			}
+
 			context.fillStyle = getFillStyle(GRID_COLOURS[i], guideX, guideY, 32, 0);
 			context.fillRect(guideX, guideY, 32, 32);
 			context.shadowColor = 'rgba(0,0,0,0)';
 			context.strokeRect(guideX, guideY, 32, 32);
+
 			var isOption = false;
+
 			for (var j = 0; j < mouse.currentCell.options.length; j++)
 			{
 				if (mouse.currentCell.options[j] == i)
@@ -614,29 +669,24 @@ var Draw = function()
 				context.fillStyle = 'rgba(0,0,0,0.75)';
 				context.fillRect(guideX, guideY, 32, 32);
 			}
-
 		}
 		else
 		{
-
 			context.fillStyle = getFillStyle(GRID_COLOURS[i], guideX, guideY, 32, 0);
 			context.fillRect(guideX, guideY, 32, 32);
 			context.shadowColor = 'rgba(0,0,0,0)';
 			context.strokeRect(guideX, guideY, 32, 32);
 		}
 		guideY += 48;
-
 	}
 	context.restore();
-	context.fillStyle = getFillStyle(GRID_COLOURS[0], guideX, guideY, 32, 0);;
-	context.fillRect(guideX, guideY, 32, 32);
-	context.strokeRect(guideX, guideY, 32, 32);
 
 	context.fillStyle = "000"
-	context.font = "18pt Noto";
+	context.font = "18pt Roboto";
 	context.textAlign = "center";
-	var textX = BOX_WIDTH / 2;
-	var textY = BOX_HEIGHT + 40;
+
+	var textX = BOX_MARGIN + BOX_WIDTH / 2;
+	var textY = BOX_MARGIN + BOX_HEIGHT + 40;
 	context.fillText("Clicks: " + clicks, textX, textY);
 
 };
