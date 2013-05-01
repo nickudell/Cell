@@ -35,6 +35,7 @@ var COLOURS = [[255, 0, 0],
 
 var difficulty = 0;
 var GRID_COLOURS;
+
 switch (difficulty)
 {
 	case 0:
@@ -70,11 +71,30 @@ var loadingStrings = ["Doing something or other.",
                         "Establishing link to the thunder cloud.",
                         "Regretting.",
                         "Saying what I'm doing.",
-                        "Splining reticulates."]
+                        "Splining reticulates.",
+                        "Selling your details to large corporations.",
+                        "Rubbing two dollar bills together to start a fire.",
+                        "Having a snack.",
+                        "Hitting nails with things that look like hammers.",
+                        "Hitting hammers with nails.",
+                        "Making the best Moroccan tagine you've ever seen.",
+                        "Crying and watching Rom Coms.",
+                        "Manscaping.",
+                        "Solving world hunger.",
+                        "Don't tell Notch or he'll be mad."]
 var winStrings = ["You are the awesomest. Is that a word? Awesomest?",
-                         "Way to go there, buddy.", "At long last, your [INSERT FATHER FIGURE HERE] is proud.",
+                        "Way to go there, buddy.",
+                        "At long last, your [INSERT FATHER FIGURE HERE] is proud.",
                         "Son and/or daughter, I am appoint.",
-                        "I guess you can go about your life now, huh?."]
+                        "I guess you can go about your life now, huh?.",
+                        "They should make caffeine that you can breath.",
+                        "If you start seeing a lot of coloured boxes in your dreams. My bad.",
+                        "This one's going on the fridge.",
+                        "Tell your friends! Have fewer friends!",
+                        "You should celebrate by eating like a whole jar of mayonnaise.",
+                        "The sunlight, it burns!",
+                        "While you were playing this, the zombies won. Sorry.",
+                        "Excelsior!"]
 var icons = [];
 var message = Math.floor(Math.random() * loadingStrings.length);
 
