@@ -33,7 +33,7 @@ var COLOURS = [[255, 0, 0],
                     [255, 0, 255],
                     ];
 
-var difficulty = 1;
+var difficulty = 0;
 var GRID_COLOURS;
 switch (difficulty)
 {
@@ -178,8 +178,6 @@ function awaitAssets()
 		context.fillText(loadingStrings[message], CANVAS_WIDTH / 2, barY + 96);
 		context.restore();
 		loopTimeout = setTimeout(awaitAssets, 1000 / FPS);
-
-
 	}
 };
 
