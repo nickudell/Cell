@@ -19,6 +19,8 @@ var timeString;
 
 var GRID_SIZE;
 
+var CELL_MARGIN = 4;
+
 var grid = [];
 
 var COLOURS = [[255, 0, 0],
@@ -51,6 +53,7 @@ switch (difficulty)
 	case 2:
 		//hard
 		GRID_COLOURS = COLOURS;
+		CELL_MARGIN = 2;
 		var GRID_SIZE = 32;
 		break;
 }
@@ -417,7 +420,6 @@ function cell(solution)
 	this.value = this.options[optionIndex];
 	this.locked = (this.options.length == 1)
 	this.certain = false;
-	this.padding = 4;
 
 
 	this.draw = function(x, y, width, height, solution)
@@ -442,10 +444,10 @@ function cell(solution)
 			width);
 		}
 
-		context.fillRect(x + this.padding, y + this.padding, width - 2 * this.padding, height - 2 * this.padding);
+		context.fillRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
 		context.lineWidth = 1;
 		context.strokeStyle = '888';
-		context.strokeRect(x + this.padding, y + this.padding, width - 2 * this.padding, height - 2 * this.padding);
+		context.strokeRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
 		if (this.options.length == 1)
 		{
 			context.shadowColor = 'rgba(0,0,0,0.65)';
