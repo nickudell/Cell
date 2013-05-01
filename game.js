@@ -561,10 +561,14 @@ var Draw = function()
 		context.lineTo(BOX_WIDTH, y);
 		context.stroke();
 	}
-	var y = cellHeight * GRID_SIZE;
 	context.beginPath();
-	context.moveTo(0, y);
-	context.lineTo(BOX_WIDTH, y);
+	context.moveTo(0, BOX_HEIGHT);
+	context.lineTo(BOX_WIDTH, BOX_HEIGHT);
+	context.stroke();
+
+	context.beginPath();
+	context.moveTo(BOX_WIDTH, 0);
+	context.lineTo(BOX_WIDTH, BOX_HEIGHT);
 	context.stroke();
 	context.restore();
 
@@ -594,11 +598,14 @@ var Draw = function()
 				context.strokeStyle = '000';
 				context.lineWidth = 2;
 			}
+
 			context.fillStyle = getFillStyle(GRID_COLOURS[i], guideX, guideY, 32, 0);
 			context.fillRect(guideX, guideY, 32, 32);
 			context.shadowColor = 'rgba(0,0,0,0)';
 			context.strokeRect(guideX, guideY, 32, 32);
+
 			var isOption = false;
+
 			for (var j = 0; j < mouse.currentCell.options.length; j++)
 			{
 				if (mouse.currentCell.options[j] == i)
@@ -614,27 +621,22 @@ var Draw = function()
 				context.fillStyle = 'rgba(0,0,0,0.75)';
 				context.fillRect(guideX, guideY, 32, 32);
 			}
-
 		}
 		else
 		{
-
 			context.fillStyle = getFillStyle(GRID_COLOURS[i], guideX, guideY, 32, 0);
 			context.fillRect(guideX, guideY, 32, 32);
 			context.shadowColor = 'rgba(0,0,0,0)';
 			context.strokeRect(guideX, guideY, 32, 32);
 		}
 		guideY += 48;
-
 	}
 	context.restore();
-	context.fillStyle = getFillStyle(GRID_COLOURS[0], guideX, guideY, 32, 0);;
-	context.fillRect(guideX, guideY, 32, 32);
-	context.strokeRect(guideX, guideY, 32, 32);
 
 	context.fillStyle = "000"
-	context.font = "18pt Noto";
+	context.font = "18pt Droid";
 	context.textAlign = "center";
+
 	var textX = BOX_WIDTH / 2;
 	var textY = BOX_HEIGHT + 40;
 	context.fillText("Clicks: " + clicks, textX, textY);
