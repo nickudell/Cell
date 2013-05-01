@@ -7,3 +7,5 @@ Based on Cell by Nicholas Udell.
 See more of Nicholas Udell's work here: https://github.com/nickudell
 
 Also, I'd love it if you sent me an email at nick DOT udell AT gmail DOT com to tell me about it!
+
+Cell uses icons by Søren Nielsen, you can check out more of their work here: http://www.fainted.dk/

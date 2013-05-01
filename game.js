@@ -1,5 +1,5 @@
 //Canvas properties
-var CANVAS_WIDTH = 640;
+var CANVAS_WIDTH = 704;
 var CANVAS_HEIGHT = 704;
 
 var BOX_WIDTH = 640;
@@ -16,7 +16,7 @@ var prevTime = Date.now();
 
 var timeString;
 
-var GRID_SIZE = 16;
+var GRID_SIZE = 4;
 
 var grid = [];
 
@@ -24,15 +24,32 @@ var GRID_COLOURS = [[255, 0, 0],
                     [255, 128, 0],
                     [255, 255, 0],
                     [0, 255, 0],
-                    [0, 0, 255],
+                    [0, 128, 255],
                     [128, 0, 255],
                     [255, 0, 255]];
+
+var imageURLS = ["images/tick.png"];
+
+var assets = new AssetLoader(imageURLS);
 
 var clicks = 0;
 
 var level = 1;
 
+var tick = 0;
+var messageTick = -1;
+var loadingStrings = ["Doing something or other.", "Testing flux.", "Establishing link to the thunder cloud.", "Regretting.", "Saying what I'm doing."]
+var winStrings = ["You are the awesomest. Is that a word? Awesomest?", "Way to go there, buddy.", "At long last, your father is proud.", "Son and/or daughter, I am appoint.", "I guess you can go about your life now, huh?."]
+var icons = [];
+var message = Math.floor(Math.random() * loadingStrings.length);
+
 var showSolution = false;
+
+var mouse = {
+	x: 0,
+	y: 0,
+	currentCell: -1
+};
 
 //Initialize variables and start the game
 var Init = function()
@@ -48,6 +65,12 @@ var Init = function()
 		e.preventDefault();
 		return false;
 	});
+	canvas.addEventListener('mousemove', function(e)
+	{
+		mouse.x = e.offsetX;
+		mouse.y = e.offsetY;
+		mouse.currentCell = getCell(mouse.x, mouse.y);
+	})
 
 	context = canvas.getContext("2d");
 
@@ -56,25 +79,103 @@ var Init = function()
 	buildWorld();
 
 	//Start game loop
-	Tick();
+	awaitAssets(Tick);
 	console.log("Initialization exited.")
 };
+
+function awaitAssets()
+{
+	var BAR_WIDTH = 200;
+	var BAR_HEIGHT = 32;
+	var barX = CANVAS_WIDTH / 2 - BAR_WIDTH / 2;
+	var barY = CANVAS_HEIGHT / 2 - BAR_HEIGHT / 2;
+	var grd = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+	grd.addColorStop(0, '005');
+	grd.addColorStop(1, '05F');
+	//var grd = 'FFF';
+	var BAR_COLOUR = 'FFF';
+	if (assets.isFinished())
+	{
+		for (index in assets.images)
+		{
+			var image = assets.images[index];
+			var sprite = new Sprite();
+			sprite.setUp(image,
+			{
+				x: 0,
+				y: 0,
+				width: 128,
+				height: 128,
+				centerX: 64,
+				centerY: 64
+			});
+			icons.push(sprite);
+		}
+		//Start game loop
+		Tick();
+	}
+	else
+	{
+		Clear(grd);
+		context.fillStyle = BAR_COLOUR;
+		context.fillRect(barX, barY, BAR_WIDTH * (assets.assetsLoaded() / assets.totalAssets()), BAR_HEIGHT);
+		var loadText = "LOADING";
+		var numPips = 0;
+		for (var i = FPS; i < tick; i += FPS)
+		{
+			loadText += ".";
+			numPips++;
+		}
+		if (numPips != messageTick)
+		{
+			messageTick = numPips;
+			message = loop(message, 1, loadingStrings.length);
+		}
+		context.save();
+		context.textAlign = "left";
+		context.font = "64pt Open Sans Condensed";
+		context.fillText(loadText, CANVAS_WIDTH / 2 - context.measureText("LOADING").width / 2, barY - 32);
+		context.restore();
+
+		context.save();
+		context.textAlign = "center";
+		context.font = "16pt Roboto";
+		context.fillText(loadingStrings[message], CANVAS_WIDTH / 2, barY + 96);
+		context.restore();
+		loopTimeout = setTimeout(awaitAssets, 1000 / FPS);
+
+
+	}
+};
+
+
+function getCell(mouseX, mouseY)
+{
+	var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
+	var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
+	if (mouseX < (BOX_WIDTH / GRID_SIZE) * end && mouseX >= (BOX_WIDTH / GRID_SIZE) * begin && mouseY < (BOX_HEIGHT / GRID_SIZE) * end && mouseY >= (BOX_HEIGHT / GRID_SIZE) * begin)
+	{
+		var cellRow = Math.floor((mouseX / BOX_WIDTH) * GRID_SIZE);
+		var cellColumn = Math.floor((mouseY / BOX_HEIGHT) * GRID_SIZE);
+		return grid[cellRow][cellColumn];
+	}
+	else
+	{
+		return -1;
+	}
+}
 
 function canvasClicked(e)
 {
 	//Get which cell was clicked
 	var relX = e.offsetX;
 	var relY = e.offsetY;
-
-	var begin = GRID_SIZE / 2 - level;
-	var end = GRID_SIZE / 2 + level;
+	var cell = getCell(relX, relY);
 	//check that a cell has been clicked
-	if (relX < (BOX_WIDTH / GRID_SIZE) * end && relX >= (BOX_WIDTH / GRID_SIZE) * begin && relY < (BOX_HEIGHT / GRID_SIZE) * end && relY >= (BOX_HEIGHT / GRID_SIZE) * begin)
+	if (cell != -1)
 	{
-		var cellRow = Math.floor((relX / BOX_WIDTH) * GRID_SIZE);
-		var cellHeight = Math.floor((relY / BOX_HEIGHT) * GRID_SIZE);
 		clicks++;
-		grid[cellRow][cellHeight].cycle();
+		cell.cycle();
 	}
 	else
 	{
@@ -96,10 +197,10 @@ var Tick = function()
 
 	Clear(grd);
 	Update(deltaTime);
-	Draw()
 
 	if (isPlaying)
 	{
+		Draw()
 		loopTimeout = setTimeout(Tick, 1000 / FPS);
 	}
 	else
@@ -125,8 +226,8 @@ var Clear = function(colour)
 
 function completed()
 {
-	var begin = GRID_SIZE / 2 - level;
-	var end = GRID_SIZE / 2 + level;
+	var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
+	var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
 
 	var adjacents = [[-1, 0],
                         [1, 0],
@@ -289,6 +390,15 @@ function cell(solution)
 		}
 
 		context.fillRect(x, y, width, height);
+		if (this.options.length == 1)
+		{
+			context.shadowColor = 'rgba(0,0,0,0.65)';
+			context.shadowOffsetX = 2;
+			context.shadowOffsetY = 2;
+			context.shadowBlur = 2;
+			icons[0].draw(context, x + 8, y + 8, width - 16, height - 16);
+
+		}
 		context.restore();
 	};
 
@@ -318,21 +428,35 @@ var Update = function(deltaTime)
 	if (level > GRID_SIZE / 2)
 	{
 		clearTimeout(loopTimeout);
+		isPlaying = false;
 		win();
 	}
 };
 
 function win()
 {
-	Clear('F60');
 
-	context.fillStyle = "000"
-	context.font = "72pt Helvetica";
+	var grd = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+	grd.addColorStop(0, '005');
+	grd.addColorStop(1, '05F');
+	Clear(grd);
+	context.save();
+	context.fillStyle = 'FFF';
 	context.textAlign = "center";
-	context.fillText("YOU WIN!", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 64);
+	context.font = "78pt Open Sans Condensed";
+	context.fillText("YOU WIN", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+	context.restore();
+
+	context.save();
+	context.fillStyle = 'FFF';
+	context.textAlign = "center";
+	context.font = "16pt Roboto";
+	context.fillText(winStrings[Math.floor(Math.random() * winStrings.length)], CANVAS_WIDTH / 2, (CANVAS_HEIGHT / 2) + 96);
+	context.restore();
+
 	context.fillText("Clicks: " + clicks, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 64);
 
-	loopTimeout = setTimeout(win, 1000 / FPS);
+	//loopTimeout = setTimeout(win, 2000);
 }
 
 function getColour(colour)
@@ -384,6 +508,13 @@ var Draw = function()
 	context.fillStyle = grd;
 	context.fillRect(0, BOX_HEIGHT, CANVAS_WIDTH, CANVAS_HEIGHT - BOX_HEIGHT);
 
+	grd = context.createLinearGradient(BOX_WIDTH, 0, CANVAS_WIDTH, 0);
+	grd.addColorStop(0, 'FFF');
+	grd.addColorStop(0.4, 'FFE');
+	grd.addColorStop(0.6, 'DDC');
+	context.fillStyle = grd;
+	context.fillRect(BOX_WIDTH, 0, CANVAS_WIDTH - BOX_WIDTH, CANVAS_HEIGHT - 64);
+
 	//draw cells
 
 	var begin = GRID_SIZE / 2 - level;
@@ -394,11 +525,17 @@ var Draw = function()
 	{
 		for (var b = begin; b < end; b++)
 		{
-			grid[a][b].draw(a * cellWidth, b * cellHeight, cellWidth, cellHeight, showSolution);
+			var cell = grid[a][b];
+			cell.draw(a * cellWidth, b * cellHeight, cellWidth, cellHeight, showSolution);
 		}
 	}
 
 	//draw grid
+	context.save();
+	context.shadowColor = '444';
+	context.shadowOffsetX = 2;
+	context.shadowOffsetY = 2;
+	context.shadowBlur = 4;
 	context.strokeStyle = 'FFF';
 	context.lineWidth = 3;
 	for (var i = 1; i < GRID_SIZE; i++)
@@ -421,20 +558,68 @@ var Draw = function()
 	context.moveTo(0, y);
 	context.lineTo(BOX_WIDTH, y);
 	context.stroke();
+	context.restore();
 
 	//Add colour guide:
 
-	var guideX = 16;
-	var guideY = BOX_HEIGHT + 16;
+	var guideX = BOX_WIDTH + 16;
+	var guideY = 16;
 	context.strokeStyle = '000';
+	context.lineWidth = 2;
+	context.save();
+
 	for (var i = 0; i < GRID_COLOURS.length; i++)
 	{
-		context.fillStyle = getFillStyle(GRID_COLOURS[i], guideX, guideY, 32, 0);
-		context.fillRect(guideX, guideY, 32, 32);
-		context.strokeRect(guideX, guideY, 32, 32);
-		guideX += 48;
-	}
+		context.shadowColor = '444';
+		context.shadowOffsetX = 2;
+		context.shadowOffsetY = 2;
+		context.shadowBlur = 4;
+		if (mouse.currentCell != -1)
+		{
+			if (mouse.currentCell.value == i)
+			{
+				context.lineWidth = 3;
+				context.strokeStyle = 'FFF';
+			}
+			else
+			{
+				context.strokeStyle = '000';
+				context.lineWidth = 2;
+			}
+			context.fillStyle = getFillStyle(GRID_COLOURS[i], guideX, guideY, 32, 0);
+			context.fillRect(guideX, guideY, 32, 32);
+			context.shadowColor = 'rgba(0,0,0,0)';
+			context.strokeRect(guideX, guideY, 32, 32);
+			var isOption = false;
+			for (var j = 0; j < mouse.currentCell.options.length; j++)
+			{
+				if (mouse.currentCell.options[j] == i)
+				{
+					isOption = true;
+					break;
+				}
+			}
 
+			if (!isOption)
+			{
+				context.shadowColor = '444';
+				context.fillStyle = 'rgba(0,0,0,0.75)';
+				context.fillRect(guideX, guideY, 32, 32);
+			}
+
+		}
+		else
+		{
+
+			context.fillStyle = getFillStyle(GRID_COLOURS[i], guideX, guideY, 32, 0);
+			context.fillRect(guideX, guideY, 32, 32);
+			context.shadowColor = 'rgba(0,0,0,0)';
+			context.strokeRect(guideX, guideY, 32, 32);
+		}
+		guideY += 48;
+
+	}
+	context.restore();
 	context.fillStyle = getFillStyle(GRID_COLOURS[0], guideX, guideY, 32, 0);;
 	context.fillRect(guideX, guideY, 32, 32);
 	context.strokeRect(guideX, guideY, 32, 32);
@@ -442,8 +627,9 @@ var Draw = function()
 	context.fillStyle = "000"
 	context.font = "18pt Noto";
 	context.textAlign = "center";
-	guideX += 48;
-	context.fillText("Clicks: " + clicks, guideX + (CANVAS_WIDTH - guideX) / 2, guideY + 24);
+	var textX = BOX_WIDTH / 2;
+	var textY = BOX_HEIGHT + 40;
+	context.fillText("Clicks: " + clicks, textX, textY);
 
 };
 
