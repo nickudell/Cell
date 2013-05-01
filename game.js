@@ -1,9 +1,10 @@
 //Canvas properties
-var CANVAS_WIDTH = 704;
-var CANVAS_HEIGHT = 704;
+var CANVAS_WIDTH = 720;
+var CANVAS_HEIGHT = 720;
 
 var BOX_WIDTH = 640;
 var BOX_HEIGHT = 640;
+var BOX_MARGIN = 16;
 
 var canvas;
 var context;
@@ -16,17 +17,43 @@ var prevTime = Date.now();
 
 var timeString;
 
-var GRID_SIZE = 16;
+var GRID_SIZE;
 
 var grid = [];
 
-var GRID_COLOURS = [[255, 0, 0],
+var COLOURS = [[255, 0, 0],
                     [255, 128, 0],
                     [255, 255, 0],
-                    [0, 255, 0],
+                    [64, 150, 0],
+                    [0, 255, 64],
+                    [0, 255, 255],
                     [0, 128, 255],
+                    [0, 0, 255],
                     [128, 0, 255],
-                    [255, 0, 255]];
+                    [255, 0, 255],
+                    ];
+
+var difficulty = 1;
+var GRID_COLOURS;
+switch (difficulty)
+{
+	case 0:
+		//easy
+		GRID_COLOURS = [COLOURS[0], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8]];
+		GRID_SIZE = 8;
+		break;
+	case 1:
+		//medium
+		GRID_COLOURS = [COLOURS[0], COLOURS[1], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8], COLOURS[9]];
+		var GRID_SIZE = 16;
+		break;
+	case 2:
+		//hard
+		GRID_COLOURS = COLOURS;
+		var GRID_SIZE = 32;
+		break;
+}
+
 
 var imageURLS = ["images/tick.png"];
 
@@ -161,10 +188,10 @@ function getCell(mouseX, mouseY)
 {
 	var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
 	var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
-	if (mouseX < (BOX_WIDTH / GRID_SIZE) * end && mouseX >= (BOX_WIDTH / GRID_SIZE) * begin && mouseY < (BOX_HEIGHT / GRID_SIZE) * end && mouseY >= (BOX_HEIGHT / GRID_SIZE) * begin)
+	if (mouseX < BOX_MARGIN + (BOX_WIDTH / GRID_SIZE) * end && mouseX >= BOX_MARGIN + (BOX_WIDTH / GRID_SIZE) * begin && mouseY < BOX_MARGIN + (BOX_HEIGHT / GRID_SIZE) * end && mouseY >= BOX_MARGIN + (BOX_HEIGHT / GRID_SIZE) * begin)
 	{
-		var cellRow = Math.floor((mouseX / BOX_WIDTH) * GRID_SIZE);
-		var cellColumn = Math.floor((mouseY / BOX_HEIGHT) * GRID_SIZE);
+		var cellRow = Math.floor(((mouseX - BOX_MARGIN) / BOX_WIDTH) * GRID_SIZE);
+		var cellColumn = Math.floor(((mouseY - BOX_MARGIN) / BOX_HEIGHT) * GRID_SIZE);
 		return grid[cellRow][cellColumn];
 	}
 	else
@@ -199,11 +226,7 @@ var Tick = function()
 	var deltaTime = now - prevTime;
 	prevTime = now;
 
-	var grd = context.createLinearGradient(0, 0, 0, BOX_HEIGHT);
-	grd.addColorStop(0, '222');
-	grd.addColorStop(0.5, '555');
-
-	Clear(grd);
+	Clear('FFF');
 	Update(deltaTime);
 
 	if (isPlaying)
@@ -509,19 +532,11 @@ var Draw = function()
 	var cellWidth = BOX_WIDTH / GRID_SIZE;
 	var cellHeight = BOX_HEIGHT / GRID_SIZE;
 
-	var grd = context.createLinearGradient(0, BOX_HEIGHT, 0, CANVAS_HEIGHT);
-	grd.addColorStop(0, 'FFF');
-	grd.addColorStop(0.4, 'FFE');
-	grd.addColorStop(0.6, 'DDC');
+	var grd = context.createLinearGradient(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
+	grd.addColorStop(0, '222');
+	grd.addColorStop(0.5, '555');
 	context.fillStyle = grd;
-	context.fillRect(0, BOX_HEIGHT, CANVAS_WIDTH, CANVAS_HEIGHT - BOX_HEIGHT);
-
-	grd = context.createLinearGradient(BOX_WIDTH, 0, CANVAS_WIDTH, 0);
-	grd.addColorStop(0, 'FFF');
-	grd.addColorStop(0.4, 'FFE');
-	grd.addColorStop(0.6, 'DDC');
-	context.fillStyle = grd;
-	context.fillRect(BOX_WIDTH, 0, CANVAS_WIDTH - BOX_WIDTH, CANVAS_HEIGHT - 64);
+	context.fillRect(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH, BOX_HEIGHT);
 
 	//draw cells
 
@@ -534,7 +549,7 @@ var Draw = function()
 		for (var b = begin; b < end; b++)
 		{
 			var cell = grid[a][b];
-			cell.draw(a * cellWidth, b * cellHeight, cellWidth, cellHeight, showSolution);
+			cell.draw(BOX_MARGIN + a * cellWidth, BOX_MARGIN + b * cellHeight, cellWidth, cellHeight, showSolution);
 		}
 	}
 
@@ -548,33 +563,33 @@ var Draw = function()
 	context.lineWidth = 3;
 	for (var i = 1; i < GRID_SIZE; i++)
 	{
-		var x = cellWidth * i;
-		var y = cellHeight * i;
+		var x = BOX_MARGIN + cellWidth * i;
+		var y = BOX_MARGIN + cellHeight * i;
 
 		context.beginPath();
-		context.moveTo(x, 0);
-		context.lineTo(x, BOX_HEIGHT);
+		context.moveTo(x, BOX_MARGIN);
+		context.lineTo(x, BOX_HEIGHT + BOX_MARGIN);
 		context.stroke();
 
 		context.beginPath();
-		context.moveTo(0, y);
-		context.lineTo(BOX_WIDTH, y);
+		context.moveTo(+BOX_MARGIN, y);
+		context.lineTo(BOX_WIDTH + BOX_MARGIN, y);
 		context.stroke();
 	}
 	context.beginPath();
-	context.moveTo(0, BOX_HEIGHT);
-	context.lineTo(BOX_WIDTH, BOX_HEIGHT);
+	context.moveTo(BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
+	context.lineTo(BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
 	context.stroke();
 
 	context.beginPath();
-	context.moveTo(BOX_WIDTH, 0);
-	context.lineTo(BOX_WIDTH, BOX_HEIGHT);
+	context.moveTo(BOX_WIDTH + BOX_MARGIN, +BOX_MARGIN);
+	context.lineTo(BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
 	context.stroke();
 	context.restore();
 
 	//Add colour guide:
 
-	var guideX = BOX_WIDTH + 16;
+	var guideX = BOX_MARGIN + BOX_WIDTH + 16;
 	var guideY = 16;
 	context.strokeStyle = '000';
 	context.lineWidth = 2;
@@ -634,11 +649,11 @@ var Draw = function()
 	context.restore();
 
 	context.fillStyle = "000"
-	context.font = "18pt Droid";
+	context.font = "18pt Roboto";
 	context.textAlign = "center";
 
-	var textX = BOX_WIDTH / 2;
-	var textY = BOX_HEIGHT + 40;
+	var textX = BOX_MARGIN + BOX_WIDTH / 2;
+	var textY = BOX_MARGIN + BOX_HEIGHT + 40;
 	context.fillText("Clicks: " + clicks, textX, textY);
 
 };
