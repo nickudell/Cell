@@ -16,7 +16,7 @@ var prevTime = Date.now();
 
 var timeString;
 
-var GRID_SIZE = 4;
+var GRID_SIZE = 16;
 
 var grid = [];
 
@@ -38,8 +38,16 @@ var level = 1;
 
 var tick = 0;
 var messageTick = -1;
-var loadingStrings = ["Doing something or other.", "Testing flux.", "Establishing link to the thunder cloud.", "Regretting.", "Saying what I'm doing."]
-var winStrings = ["You are the awesomest. Is that a word? Awesomest?", "Way to go there, buddy.", "At long last, your father is proud.", "Son and/or daughter, I am appoint.", "I guess you can go about your life now, huh?."]
+var loadingStrings = ["Doing something or other.",
+                        "Testing flux.",
+                        "Establishing link to the thunder cloud.",
+                        "Regretting.",
+                        "Saying what I'm doing.",
+                        "Splining reticulates."]
+var winStrings = ["You are the awesomest. Is that a word? Awesomest?",
+                         "Way to go there, buddy.", "At long last, your [INSERT FATHER FIGURE HERE] is proud.",
+                        "Son and/or daughter, I am appoint.",
+                        "I guess you can go about your life now, huh?."]
 var icons = [];
 var message = Math.floor(Math.random() * loadingStrings.length);
 
