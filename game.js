@@ -513,8 +513,6 @@ function win()
 	context.restore();
 
 	context.fillText("Clicks: " + clicks, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 64);
-
-	//loopTimeout = setTimeout(win, 2000);
 }
 
 function getColour(colour)
@@ -585,41 +583,6 @@ var Draw = function()
 			cell.draw(BOX_MARGIN + a * cellWidth, BOX_MARGIN + b * cellHeight, cellWidth, cellHeight, showSolution);
 		}
 	}
-
-	/*//draw grid
-	context.save();
-	context.shadowColor = '444';
-	context.shadowOffsetX = 2;
-	context.shadowOffsetY = 2;
-	context.shadowBlur = 4;
-	context.strokeStyle = 'FFF';
-	context.lineWidth = 3;
-	for (var i = 1; i < GRID_SIZE; i++)
-	{
-		var x = BOX_MARGIN + cellWidth * i;
-		var y = BOX_MARGIN + cellHeight * i;
-
-		context.beginPath();
-		context.moveTo(x, BOX_MARGIN);
-		context.lineTo(x, BOX_HEIGHT + BOX_MARGIN);
-		context.stroke();
-
-		context.beginPath();
-		context.moveTo(+BOX_MARGIN, y);
-		context.lineTo(BOX_WIDTH + BOX_MARGIN, y);
-		context.stroke();
-	}
-	context.beginPath();
-	context.moveTo(BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
-	context.lineTo(BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
-	context.stroke();
-
-	context.beginPath();
-	context.moveTo(BOX_WIDTH + BOX_MARGIN, +BOX_MARGIN);
-	context.lineTo(BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
-	context.stroke();
-	context.restore();
-*/
 	//Add colour guide:
 
 	var guideX = BOX_MARGIN + BOX_WIDTH + 16;
@@ -665,8 +628,8 @@ var Draw = function()
 
 			if (!isOption)
 			{
-				context.shadowColor = '444';
-				context.fillStyle = 'rgba(0,0,0,0.75)';
+				///context.shadowColor = '444';
+				context.fillStyle = 'rgba(0,0,0,0.5)';
 				context.fillRect(guideX, guideY, 32, 32);
 			}
 		}
