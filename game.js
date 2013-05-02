@@ -35,7 +35,9 @@ var COLOURS = [[255, 0, 0],
                     [255, 0, 255],
                     ];
 
-var difficulty = 0;
+var difficulty = 1;
+var showOptions = true;
+var showChecks = true;
 var GRID_COLOURS;
 
 switch (difficulty)
@@ -49,12 +51,15 @@ switch (difficulty)
 		//medium
 		GRID_COLOURS = [COLOURS[0], COLOURS[1], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8], COLOURS[9]];
 		var GRID_SIZE = 16;
+		showChecks = false;
 		break;
 	case 2:
 		//hard
 		GRID_COLOURS = COLOURS;
 		CELL_MARGIN = 2;
 		var GRID_SIZE = 32;
+		showChecks = false;
+		showOptions = false;
 		break;
 }
 
@@ -444,10 +449,11 @@ function cell(solution)
 			width);
 		}
 
-		context.fillRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
+		//context.fillRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
 		context.lineWidth = 1;
 		context.strokeStyle = '888';
-		context.strokeRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
+		context.roundRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN, 5, true, true);
+		//context.strokeRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
 		if (this.options.length == 1)
 		{
 			context.shadowColor = 'rgba(0,0,0,0.65)';
@@ -557,9 +563,6 @@ var Draw = function()
 	var cellWidth = BOX_WIDTH / GRID_SIZE;
 	var cellHeight = BOX_HEIGHT / GRID_SIZE;
 
-	/*var grd = context.createLinearGradient(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
-	grd.addColorStop(0, '222');
-	grd.addColorStop(0.5, '555');*/
 	context.save();
 	context.shadowColor = 'rgba(0,0,0,0.25)';
 	context.shadowOffsetX = 16;
@@ -586,7 +589,7 @@ var Draw = function()
 	//Add colour guide:
 
 	var guideX = BOX_MARGIN + BOX_WIDTH + 16;
-	var guideY = 16;
+	var guideY = BOX_MARGIN + 16;
 	context.strokeStyle = '000';
 	context.lineWidth = 2;
 	context.save();
