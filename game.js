@@ -12,7 +12,7 @@ var context;
 //Game loop properties
 var loopTimeout;
 var isPlaying = true;
-var FPS = 50;
+var FPS = 10;
 var prevTime = Date.now();
 
 var timeString;
@@ -25,7 +25,7 @@ var grid = [];
 
 var COLOURS = [[255, 0, 0],
                     [255, 128, 0],
-                    [255, 255, 0],
+                    [128, 64, 0],
                     [64, 150, 0],
                     [0, 255, 64],
                     [0, 255, 255],
@@ -142,9 +142,90 @@ var Init = function()
 	buildWorld();
 
 	//Start game loop
-	awaitAssets(Tick);
+	awaitAssets();
 	console.log("Initialization exited.")
 };
+
+function newGame()
+{
+	var titleHeight = 128;
+	var grd = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+	grd.addColorStop(0, '005');
+	grd.addColorStop(1, '05F');
+	Clear(grd);
+
+	context.save();
+	context.fillStyle = 'FFF';
+	context.textAlign = "center";
+	context.font = "78pt Open Sans Condensed";
+	context.fillText("Cell", CANVAS_WIDTH / 2, titleHeight);
+	context.restore();
+
+	var centerX = CANVAS_WIDTH / 2;
+	var centerY = titleHeight + 96;
+	var buttonWidth = 320;
+	var buttonHeight = 96;
+	var buttonMargin = 32;
+	var buttonFill = 'FFF'
+	var textFill = '444';
+
+	drawButton(context, 'New Game', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
+	centerY += buttonHeight + buttonMargin;
+	drawButton(context, 'Instructions', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
+	centerY += buttonHeight + buttonMargin;
+	drawButton(context, 'Options', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
+	centerY += buttonHeight + buttonMargin;
+	drawButton(context, 'Credits', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
+	centerY += buttonHeight + buttonMargin;
+
+	loopTimeout = setTimeout(newGame, 1000 / FPS);
+};
+
+function drawButton(context, text, centerX, centerY, width, height, buttonFill, textFill, buttonStroke)
+{
+	context.save();
+	context.fillStyle = buttonFill;
+	context.shadowColor = 'rgba(0,0,0,0.25)';
+	context.shadowOffsetX = 12;
+	context.shadowOffsetY = 12;
+	context.shadowBlur = 16;
+	context.fillRect(centerX - width / 2, centerY - height / 2, width, height);
+	context.restore();
+	context.save();
+	context.strokeStyle = buttonStroke;
+	context.strokeRect(centerX - width / 2, centerY - height / 2, width, height);
+	context.restore();
+
+	context.save();
+	context.fillStyle = textFill;
+	context.textAlign = "center";
+	context.font = "48pt Open Sans Condensed";
+	context.fillText(text, centerX, centerY + 24);
+	context.restore();
+}
+
+function credits()
+{
+	var grd = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+	grd.addColorStop(0, '005');
+	grd.addColorStop(1, '05F');
+	Clear(grd);
+	context.save();
+	context.fillStyle = 'FFF';
+	context.textAlign = "center";
+	context.font = "78pt Open Sans Condensed";
+	context.fillText("YOU WIN", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+	context.restore();
+
+	context.save();
+	context.fillStyle = 'FFF';
+	context.textAlign = "center";
+	context.font = "16pt Roboto";
+	context.fillText(winStrings[Math.floor(Math.random() * winStrings.length)], CANVAS_WIDTH / 2, (CANVAS_HEIGHT / 2) + 96);
+	context.restore();
+
+	context.fillText("Clicks: " + clicks, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 64);
+}
 
 function awaitAssets()
 {
@@ -176,6 +257,7 @@ function awaitAssets()
 		}
 		//Start game loop
 		Tick();
+		//newGame();
 	}
 	else
 	{
@@ -431,9 +513,9 @@ function cell(solution)
 	{
 		context.save();
 		context.shadowColor = 'rgba(0,0,0,0.25)';
-		context.shadowOffsetX = 8;
-		context.shadowOffsetY = 8;
-		context.shadowBlur = 16;
+		context.shadowOffsetX = 4;
+		context.shadowOffsetY = 4;
+		context.shadowBlur = 8;
 		if (solution)
 		{
 			context.fillStyle = getFillStyle(GRID_COLOURS[this.solution],
@@ -452,7 +534,7 @@ function cell(solution)
 		//context.fillRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
 		context.lineWidth = 1;
 		context.strokeStyle = '888';
-		context.roundRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN, 5, true, true);
+		context.roundRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN, 2, true, true);
 		//context.strokeRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
 		if (this.options.length == 1)
 		{
