@@ -2,9 +2,7 @@
 var CANVAS_WIDTH = 720;
 var CANVAS_HEIGHT = 720;
 
-var BOX_WIDTH = 640;
-var BOX_HEIGHT = 640;
-var BOX_MARGIN = 16;
+
 
 var canvas;
 var context;
@@ -17,51 +15,11 @@ var prevTime = Date.now();
 
 var timeString;
 
-var GRID_SIZE;
-
-var CELL_MARGIN = 4;
-
-var grid = [];
-
-var COLOURS = [[255, 0, 0],
-                    [255, 128, 0],
-                    [128, 64, 0],
-                    [64, 150, 0],
-                    [0, 255, 64],
-                    [0, 255, 255],
-                    [0, 128, 255],
-                    [0, 0, 255],
-                    [128, 0, 255],
-                    [255, 0, 255],
-                    ];
 
 var difficulty = 1;
 var showOptions = true;
 var showChecks = true;
-var GRID_COLOURS;
 
-switch (difficulty)
-{
-	case 0:
-		//easy
-		GRID_COLOURS = [COLOURS[0], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8]];
-		GRID_SIZE = 8;
-		break;
-	case 1:
-		//medium
-		GRID_COLOURS = [COLOURS[0], COLOURS[1], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8], COLOURS[9]];
-		var GRID_SIZE = 16;
-		showChecks = false;
-		break;
-	case 2:
-		//hard
-		GRID_COLOURS = COLOURS;
-		CELL_MARGIN = 2;
-		var GRID_SIZE = 32;
-		showChecks = false;
-		showOptions = false;
-		break;
-}
 
 
 var imageURLS = ["images/tick.png"];
@@ -69,8 +27,6 @@ var imageURLS = ["images/tick.png"];
 var assets = new AssetLoader(imageURLS);
 
 var clicks = 0;
-
-var level = 1;
 
 var tick = 0;
 var messageTick = -1;
@@ -289,21 +245,6 @@ function awaitAssets()
 };
 
 
-function getCell(mouseX, mouseY)
-{
-	var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
-	var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
-	if (mouseX < BOX_MARGIN + (BOX_WIDTH / GRID_SIZE) * end && mouseX >= BOX_MARGIN + (BOX_WIDTH / GRID_SIZE) * begin && mouseY < BOX_MARGIN + (BOX_HEIGHT / GRID_SIZE) * end && mouseY >= BOX_MARGIN + (BOX_HEIGHT / GRID_SIZE) * begin)
-	{
-		var cellRow = Math.floor(((mouseX - BOX_MARGIN) / BOX_WIDTH) * GRID_SIZE);
-		var cellColumn = Math.floor(((mouseY - BOX_MARGIN) / BOX_HEIGHT) * GRID_SIZE);
-		return grid[cellRow][cellColumn];
-	}
-	else
-	{
-		return -1;
-	}
-}
 
 function canvasClicked(e)
 {
@@ -362,39 +303,7 @@ var Clear = function(colour)
 	context.fill();
 };
 
-function completed()
-{
-	var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
-	var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
 
-	var adjacents = [[-1, 0],
-                        [1, 0],
-                        [0, -1],
-                        [0, 1]];
-
-	for (var x = begin; x < end; x++)
-	{
-		for (var y = begin; y < end; y++)
-		{
-			var cell = grid[x][y];
-			for (var i = 0; i < adjacents.length; i++)
-			{
-				var x2 = x + adjacents[i][0];
-				var y2 = y + adjacents[i][1];
-				if (x2 >= begin && y2 >= begin && x2 < end && y2 < end)
-				{
-					//Check if adjacent block follows the rules
-					var cell2 = grid[x2][y2];
-					if (!(loop(cell2.value, 1, GRID_COLOURS.length) == cell.value || loop(cell2.value, -1, GRID_COLOURS.length) == cell.value || cell2.value == cell.value))
-					{
-						return false;
-					}
-				}
-			}
-		}
-	}
-	return true;
-}
 
 function buildWorld()
 {
@@ -492,79 +401,6 @@ function buildWorld()
 	}
 }
 
-function cell(solution)
-{
-	this.options = [];
-	this.solution = solution || 0;
-	for (var k = 0; k < GRID_COLOURS.length; k++)
-	{
-		if (k == this.solution || Math.floor(Math.random() * 2))
-		{
-			this.options.push(k);
-		}
-	}
-	var optionIndex = Math.floor(Math.random() * this.options.length);
-	this.value = this.options[optionIndex];
-	this.locked = (this.options.length == 1)
-	this.certain = false;
-
-
-	this.draw = function(x, y, width, height, solution)
-	{
-		context.save();
-		context.shadowColor = 'rgba(0,0,0,0.25)';
-		context.shadowOffsetX = 4;
-		context.shadowOffsetY = 4;
-		context.shadowBlur = 8;
-		if (solution)
-		{
-			context.fillStyle = getFillStyle(GRID_COLOURS[this.solution],
-			x + width / 2,
-			y + height / 2,
-			width);
-		}
-		else
-		{
-			context.fillStyle = getFillStyle(GRID_COLOURS[this.value],
-			x + width / 2,
-			y + height / 2,
-			width);
-		}
-
-		//context.fillRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
-		context.lineWidth = 1;
-		context.strokeStyle = '888';
-		context.roundRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN, 2, true, true);
-		//context.strokeRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
-		if (this.options.length == 1)
-		{
-			context.shadowColor = 'rgba(0,0,0,0.65)';
-			context.shadowOffsetX = 2;
-			context.shadowOffsetY = 2;
-			context.shadowBlur = 2;
-			icons[0].draw(context, x + 8, y + 8, width - 16, height - 16);
-
-		}
-		context.restore();
-	};
-
-	this.cycle = function()
-	{
-		optionIndex = loop(optionIndex, 1, this.options.length);
-		this.value = this.options[optionIndex];
-	}
-}
-
-function loop(value, change, maxValue)
-{
-	var result = value + change;
-	while (result < 0)
-	{
-		result += maxValue;
-	}
-	return result % maxValue;
-}
-
 var Update = function(deltaTime)
 {
 	if (completed())
@@ -655,7 +491,6 @@ var Draw = function()
 	context.restore();
 
 	//draw cells
-
 	var begin = GRID_SIZE / 2 - level;
 	var end = GRID_SIZE / 2 + level;
 
