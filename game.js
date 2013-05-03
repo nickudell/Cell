@@ -2,9 +2,7 @@
 var CANVAS_WIDTH = 720;
 var CANVAS_HEIGHT = 720;
 
-var BOX_WIDTH = 640;
-var BOX_HEIGHT = 640;
-var BOX_MARGIN = 16;
+
 
 var canvas;
 var context;
@@ -12,51 +10,16 @@ var context;
 //Game loop properties
 var loopTimeout;
 var isPlaying = true;
-var FPS = 50;
+var FPS = 10;
 var prevTime = Date.now();
 
 var timeString;
 
-var GRID_SIZE;
 
-var CELL_MARGIN = 4;
+var difficulty = 1;
+var showOptions = true;
+var showChecks = true;
 
-var grid = [];
-
-var COLOURS = [[255, 0, 0],
-                    [255, 128, 0],
-                    [255, 255, 0],
-                    [64, 150, 0],
-                    [0, 255, 64],
-                    [0, 255, 255],
-                    [0, 128, 255],
-                    [0, 0, 255],
-                    [128, 0, 255],
-                    [255, 0, 255],
-                    ];
-
-var difficulty = 0;
-var GRID_COLOURS;
-
-switch (difficulty)
-{
-	case 0:
-		//easy
-		GRID_COLOURS = [COLOURS[0], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8]];
-		GRID_SIZE = 8;
-		break;
-	case 1:
-		//medium
-		GRID_COLOURS = [COLOURS[0], COLOURS[1], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8], COLOURS[9]];
-		var GRID_SIZE = 16;
-		break;
-	case 2:
-		//hard
-		GRID_COLOURS = COLOURS;
-		CELL_MARGIN = 2;
-		var GRID_SIZE = 32;
-		break;
-}
 
 
 var imageURLS = ["images/tick.png"];
@@ -64,8 +27,6 @@ var imageURLS = ["images/tick.png"];
 var assets = new AssetLoader(imageURLS);
 
 var clicks = 0;
-
-var level = 1;
 
 var tick = 0;
 var messageTick = -1;
@@ -137,9 +98,90 @@ var Init = function()
 	buildWorld();
 
 	//Start game loop
-	awaitAssets(Tick);
+	awaitAssets();
 	console.log("Initialization exited.")
 };
+
+function newGame()
+{
+	var titleHeight = 128;
+	var grd = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+	grd.addColorStop(0, '005');
+	grd.addColorStop(1, '05F');
+	Clear(grd);
+
+	context.save();
+	context.fillStyle = 'FFF';
+	context.textAlign = "center";
+	context.font = "78pt Open Sans Condensed";
+	context.fillText("Cell", CANVAS_WIDTH / 2, titleHeight);
+	context.restore();
+
+	var centerX = CANVAS_WIDTH / 2;
+	var centerY = titleHeight + 96;
+	var buttonWidth = 320;
+	var buttonHeight = 96;
+	var buttonMargin = 32;
+	var buttonFill = 'FFF'
+	var textFill = '444';
+
+	drawButton(context, 'New Game', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
+	centerY += buttonHeight + buttonMargin;
+	drawButton(context, 'Instructions', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
+	centerY += buttonHeight + buttonMargin;
+	drawButton(context, 'Options', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
+	centerY += buttonHeight + buttonMargin;
+	drawButton(context, 'Credits', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
+	centerY += buttonHeight + buttonMargin;
+
+	loopTimeout = setTimeout(newGame, 1000 / FPS);
+};
+
+function drawButton(context, text, centerX, centerY, width, height, buttonFill, textFill, buttonStroke)
+{
+	context.save();
+	context.fillStyle = buttonFill;
+	context.shadowColor = 'rgba(0,0,0,0.25)';
+	context.shadowOffsetX = 12;
+	context.shadowOffsetY = 12;
+	context.shadowBlur = 16;
+	context.fillRect(centerX - width / 2, centerY - height / 2, width, height);
+	context.restore();
+	context.save();
+	context.strokeStyle = buttonStroke;
+	context.strokeRect(centerX - width / 2, centerY - height / 2, width, height);
+	context.restore();
+
+	context.save();
+	context.fillStyle = textFill;
+	context.textAlign = "center";
+	context.font = "48pt Open Sans Condensed";
+	context.fillText(text, centerX, centerY + 24);
+	context.restore();
+}
+
+function credits()
+{
+	var grd = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+	grd.addColorStop(0, '005');
+	grd.addColorStop(1, '05F');
+	Clear(grd);
+	context.save();
+	context.fillStyle = 'FFF';
+	context.textAlign = "center";
+	context.font = "78pt Open Sans Condensed";
+	context.fillText("YOU WIN", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
+	context.restore();
+
+	context.save();
+	context.fillStyle = 'FFF';
+	context.textAlign = "center";
+	context.font = "16pt Roboto";
+	context.fillText(winStrings[Math.floor(Math.random() * winStrings.length)], CANVAS_WIDTH / 2, (CANVAS_HEIGHT / 2) + 96);
+	context.restore();
+
+	context.fillText("Clicks: " + clicks, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 64);
+}
 
 function awaitAssets()
 {
@@ -171,6 +213,7 @@ function awaitAssets()
 		}
 		//Start game loop
 		Tick();
+		//newGame();
 	}
 	else
 	{
@@ -202,21 +245,6 @@ function awaitAssets()
 };
 
 
-function getCell(mouseX, mouseY)
-{
-	var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
-	var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
-	if (mouseX < BOX_MARGIN + (BOX_WIDTH / GRID_SIZE) * end && mouseX >= BOX_MARGIN + (BOX_WIDTH / GRID_SIZE) * begin && mouseY < BOX_MARGIN + (BOX_HEIGHT / GRID_SIZE) * end && mouseY >= BOX_MARGIN + (BOX_HEIGHT / GRID_SIZE) * begin)
-	{
-		var cellRow = Math.floor(((mouseX - BOX_MARGIN) / BOX_WIDTH) * GRID_SIZE);
-		var cellColumn = Math.floor(((mouseY - BOX_MARGIN) / BOX_HEIGHT) * GRID_SIZE);
-		return grid[cellRow][cellColumn];
-	}
-	else
-	{
-		return -1;
-	}
-}
 
 function canvasClicked(e)
 {
@@ -275,39 +303,7 @@ var Clear = function(colour)
 	context.fill();
 };
 
-function completed()
-{
-	var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
-	var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
 
-	var adjacents = [[-1, 0],
-                        [1, 0],
-                        [0, -1],
-                        [0, 1]];
-
-	for (var x = begin; x < end; x++)
-	{
-		for (var y = begin; y < end; y++)
-		{
-			var cell = grid[x][y];
-			for (var i = 0; i < adjacents.length; i++)
-			{
-				var x2 = x + adjacents[i][0];
-				var y2 = y + adjacents[i][1];
-				if (x2 >= begin && y2 >= begin && x2 < end && y2 < end)
-				{
-					//Check if adjacent block follows the rules
-					var cell2 = grid[x2][y2];
-					if (!(loop(cell2.value, 1, GRID_COLOURS.length) == cell.value || loop(cell2.value, -1, GRID_COLOURS.length) == cell.value || cell2.value == cell.value))
-					{
-						return false;
-					}
-				}
-			}
-		}
-	}
-	return true;
-}
 
 function buildWorld()
 {
@@ -405,78 +401,6 @@ function buildWorld()
 	}
 }
 
-function cell(solution)
-{
-	this.options = [];
-	this.solution = solution || 0;
-	for (var k = 0; k < GRID_COLOURS.length; k++)
-	{
-		if (k == this.solution || Math.floor(Math.random() * 2))
-		{
-			this.options.push(k);
-		}
-	}
-	var optionIndex = Math.floor(Math.random() * this.options.length);
-	this.value = this.options[optionIndex];
-	this.locked = (this.options.length == 1)
-	this.certain = false;
-
-
-	this.draw = function(x, y, width, height, solution)
-	{
-		context.save();
-		context.shadowColor = 'rgba(0,0,0,0.25)';
-		context.shadowOffsetX = 8;
-		context.shadowOffsetY = 8;
-		context.shadowBlur = 16;
-		if (solution)
-		{
-			context.fillStyle = getFillStyle(GRID_COLOURS[this.solution],
-			x + width / 2,
-			y + height / 2,
-			width);
-		}
-		else
-		{
-			context.fillStyle = getFillStyle(GRID_COLOURS[this.value],
-			x + width / 2,
-			y + height / 2,
-			width);
-		}
-
-		context.fillRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
-		context.lineWidth = 1;
-		context.strokeStyle = '888';
-		context.strokeRect(x + CELL_MARGIN, y + CELL_MARGIN, width - 2 * CELL_MARGIN, height - 2 * CELL_MARGIN);
-		if (this.options.length == 1)
-		{
-			context.shadowColor = 'rgba(0,0,0,0.65)';
-			context.shadowOffsetX = 2;
-			context.shadowOffsetY = 2;
-			context.shadowBlur = 2;
-			icons[0].draw(context, x + 8, y + 8, width - 16, height - 16);
-
-		}
-		context.restore();
-	};
-
-	this.cycle = function()
-	{
-		optionIndex = loop(optionIndex, 1, this.options.length);
-		this.value = this.options[optionIndex];
-	}
-}
-
-function loop(value, change, maxValue)
-{
-	var result = value + change;
-	while (result < 0)
-	{
-		result += maxValue;
-	}
-	return result % maxValue;
-}
-
 var Update = function(deltaTime)
 {
 	if (completed())
@@ -513,8 +437,6 @@ function win()
 	context.restore();
 
 	context.fillText("Clicks: " + clicks, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 64);
-
-	//loopTimeout = setTimeout(win, 2000);
 }
 
 function getColour(colour)
@@ -559,9 +481,6 @@ var Draw = function()
 	var cellWidth = BOX_WIDTH / GRID_SIZE;
 	var cellHeight = BOX_HEIGHT / GRID_SIZE;
 
-	/*var grd = context.createLinearGradient(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
-	grd.addColorStop(0, '222');
-	grd.addColorStop(0.5, '555');*/
 	context.save();
 	context.shadowColor = 'rgba(0,0,0,0.25)';
 	context.shadowOffsetX = 16;
@@ -572,7 +491,6 @@ var Draw = function()
 	context.restore();
 
 	//draw cells
-
 	var begin = GRID_SIZE / 2 - level;
 	var end = GRID_SIZE / 2 + level;
 
@@ -585,45 +503,10 @@ var Draw = function()
 			cell.draw(BOX_MARGIN + a * cellWidth, BOX_MARGIN + b * cellHeight, cellWidth, cellHeight, showSolution);
 		}
 	}
-
-	/*//draw grid
-	context.save();
-	context.shadowColor = '444';
-	context.shadowOffsetX = 2;
-	context.shadowOffsetY = 2;
-	context.shadowBlur = 4;
-	context.strokeStyle = 'FFF';
-	context.lineWidth = 3;
-	for (var i = 1; i < GRID_SIZE; i++)
-	{
-		var x = BOX_MARGIN + cellWidth * i;
-		var y = BOX_MARGIN + cellHeight * i;
-
-		context.beginPath();
-		context.moveTo(x, BOX_MARGIN);
-		context.lineTo(x, BOX_HEIGHT + BOX_MARGIN);
-		context.stroke();
-
-		context.beginPath();
-		context.moveTo(+BOX_MARGIN, y);
-		context.lineTo(BOX_WIDTH + BOX_MARGIN, y);
-		context.stroke();
-	}
-	context.beginPath();
-	context.moveTo(BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
-	context.lineTo(BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
-	context.stroke();
-
-	context.beginPath();
-	context.moveTo(BOX_WIDTH + BOX_MARGIN, +BOX_MARGIN);
-	context.lineTo(BOX_WIDTH + BOX_MARGIN, BOX_HEIGHT + BOX_MARGIN);
-	context.stroke();
-	context.restore();
-*/
 	//Add colour guide:
 
 	var guideX = BOX_MARGIN + BOX_WIDTH + 16;
-	var guideY = 16;
+	var guideY = BOX_MARGIN + 16;
 	context.strokeStyle = '000';
 	context.lineWidth = 2;
 	context.save();
@@ -665,8 +548,8 @@ var Draw = function()
 
 			if (!isOption)
 			{
-				context.shadowColor = '444';
-				context.fillStyle = 'rgba(0,0,0,0.75)';
+				///context.shadowColor = '444';
+				context.fillStyle = 'rgba(0,0,0,0.5)';
 				context.fillRect(guideX, guideY, 32, 32);
 			}
 		}
