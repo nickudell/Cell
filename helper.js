@@ -43,6 +43,19 @@ function extend(from, to)
 
 	return to;
 };
+
+//Loop through values. Much easier than dealing with silly things
+
+function loop(value, change, maxValue)
+{
+	var result = value + change;
+	while (result < 0)
+	{
+		result += maxValue;
+	}
+	return result % maxValue;
+}
+
 //add a rounded rectangle function to context2Ds
 CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius, fill, stroke)
 {

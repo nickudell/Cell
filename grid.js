@@ -4,7 +4,6 @@ function Grid(x, y, difficulty)
 	var level = 1;
 	var BOX_WIDTH = 640;
 	var BOX_HEIGHT = 640;
-	var BOX_MARGIN = 16;
 	this.x = x || 0;
 	this.y = y || 0;
 
@@ -154,6 +153,11 @@ function Grid(x, y, difficulty)
 		}
 	};
 
+	this.getLevel = function()
+	{
+		return level;
+	}
+
 	this.draw = function()
 	{
 		var cellWidth = BOX_WIDTH / GRID_SIZE;
@@ -165,7 +169,7 @@ function Grid(x, y, difficulty)
 		context.shadowOffsetY = 16;
 		context.shadowBlur = 32;
 		context.fillStyle = 'FFF';
-		context.fillRect(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH, BOX_HEIGHT);
+		context.fillRect(this.x, this.y, BOX_WIDTH, BOX_HEIGHT);
 		context.restore();
 
 		//draw cells
@@ -178,8 +182,8 @@ function Grid(x, y, difficulty)
 			for (var b = begin; b < end; b++)
 			{
 				var cell = world[a][b];
-				cell.draw(BOX_MARGIN + a * cellWidth,
-				BOX_MARGIN + b * cellHeight,
+				cell.draw(this.x + a * cellWidth,
+				this.y + b * cellHeight,
 				cellWidth,
 				cellHeight,
 				showSolution);
@@ -201,8 +205,8 @@ function Grid(x, y, difficulty)
 		var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
 		if (mouseX < this.x + (BOX_WIDTH / GRID_SIZE) * end && mouseX >= this.x + (BOX_WIDTH / GRID_SIZE) * begin && mouseY < this.y + (BOX_HEIGHT / GRID_SIZE) * end && mouseY >= this.y + (BOX_HEIGHT / GRID_SIZE) * begin)
 		{
-			var cellRow = Math.floor(((mouseX - BOX_MARGIN) / BOX_WIDTH) * GRID_SIZE);
-			var cellColumn = Math.floor(((mouseY - BOX_MARGIN) / BOX_HEIGHT) * GRID_SIZE);
+			var cellRow = Math.floor(((mouseX - this.x) / BOX_WIDTH) * GRID_SIZE);
+			var cellColumn = Math.floor(((mouseY - this.y) / BOX_HEIGHT) * GRID_SIZE);
 			return grid[cellRow][cellColumn];
 		}
 		else
