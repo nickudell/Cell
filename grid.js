@@ -1,9 +1,9 @@
-function Grid(x, y, difficulty)
+function Grid(x, y, width, height, difficulty)
 {
 	var world;
 	var level = 1;
-	var BOX_WIDTH = 640;
-	var BOX_HEIGHT = 640;
+	var BOX_WIDTH = width || 640;
+	var BOX_HEIGHT = height || 640;
 	this.x = x || 0;
 	this.y = y || 0;
 
@@ -17,14 +17,13 @@ function Grid(x, y, difficulty)
 		return BOX_HEIGHT;
 	};
 
-
-	var GRID_SIZE;
+	this.size = 0;
 
 	var CELL_MARGIN = 4;
 
 	var COLOURS = [[255, 0, 0],
                     [255, 128, 0],
-                    [128, 64, 0],
+                    [160, 96, 0],
                     [64, 150, 0],
                     [0, 255, 64],
                     [0, 255, 255],
@@ -34,46 +33,48 @@ function Grid(x, y, difficulty)
                     [255, 0, 255],
                     ];
 
-	var GRID_COLOURS;
+	this.colours = [];
 	switch (difficulty)
 	{
 		case 0:
 			//easy
-			GRID_COLOURS = [COLOURS[0], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8]];
-			GRID_SIZE = 8;
+			this.colours = [COLOURS[0], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8]];
+			this.size = 8;
 			break;
 		case 1:
 			//medium
-			GRID_COLOURS = [COLOURS[0], COLOURS[1], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8], COLOURS[9]];
-			var GRID_SIZE = 16;
+			this.colours = [COLOURS[0], COLOURS[1], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8], COLOURS[9]];
+			this.size = 16;
 			showChecks = false;
 			break;
 		case 2:
 			//hard
-			GRID_COLOURS = COLOURS;
+			this.colours = COLOURS;
 			CELL_MARGIN = 2;
-			var GRID_SIZE = 32;
+			this.size = 32;
 			showChecks = false;
 			showOptions = false;
 			break;
 	}
 
+	var that = this;
+
 	this.buildWorld = function()
 	{
 		var solution = [];
 		//try to build a solved level, then add random extra data to make it harder
-		for (var i = 0; i < GRID_SIZE; i++)
+		for (var i = 0; i < this.size; i++)
 		{
 			solution.push([]);
-			for (var j = 0; j < GRID_SIZE; j++)
+			for (var j = 0; j < this.size; j++)
 			{
 				solution[i].push(-1);
 			}
 		}
 		//now work out from there
-		for (var x = 0; x < GRID_SIZE; x++)
+		for (var x = 0; x < this.size; x++)
 		{
-			for (var y = 0; y < GRID_SIZE; y++)
+			for (var y = 0; y < this.size; y++)
 			{
 				var allowedColours;
 				if (x - 1 < 0)
@@ -81,14 +82,14 @@ function Grid(x, y, difficulty)
 					if (y - 1 < 0)
 					{
 						//First block is set to a random colour
-						allowedColours = [Math.floor(Math.random() * GRID_COLOURS.length)];
+						allowedColours = this.colours.pick();
 					}
 					else
 					{
 						//Only have top for reference
 						var same = solution[x][y - 1];
-						var up = loop(same, 1, GRID_COLOURS.length);
-						var down = loop(same, -1, GRID_COLOURS.length);
+						var up = Math.loop(same, 1, this.colours.length);
+						var down = Math.loop(same, -1, this.colours.length);
 						allowedColours = [same, up, down];
 					}
 				}
@@ -98,8 +99,8 @@ function Grid(x, y, difficulty)
 					{
 						//Only have left for reference
 						var same = solution[x - 1][y];
-						var up = loop(same, 1, GRID_COLOURS.length);
-						var down = loop(same, -1, GRID_COLOURS.length);
+						var up = Math.loop(same, 1, this.colours.length);
+						var down = Math.loop(same, -1, this.colours.length);
 						allowedColours = [same, up, down];
 					}
 					else
@@ -109,17 +110,17 @@ function Grid(x, y, difficulty)
 						var left = solution[x - 1][y];
 						if (top == left)
 						{
-							var up = loop(top, 1, GRID_COLOURS.length);
-							var down = loop(top, -1, GRID_COLOURS.length);
+							var up = Math.loop(top, 1, this.colours.length);
+							var down = Math.loop(top, -1, this.colours.length);
 							allowedColours = [top, up, down];
 						}
 						else
 						{
 							//find the colours in common to the two surrounding colours
-							var up1 = loop(top, 1, GRID_COLOURS.length);
-							var down1 = loop(top, -1, GRID_COLOURS.length);
-							var up2 = loop(left, 1, GRID_COLOURS.length);
-							var down2 = loop(left, -1, GRID_COLOURS.length);
+							var up1 = Math.loop(top, 1, this.colours.length);
+							var down1 = Math.loop(top, -1, this.colours.length);
+							var up2 = Math.loop(left, 1, this.colours.length);
+							var down2 = Math.loop(left, -1, this.colours.length);
 							allowedColours = [];
 							if (up1 == left || up1 == down2)
 							{
@@ -136,32 +137,34 @@ function Grid(x, y, difficulty)
 						}
 					}
 				}
-				var result = allowedColours[Math.floor(Math.random() * allowedColours.length)];
+				var result = allowedColours.pick();
 				solution[x][y] = result;
 			}
 		}
 		world = [];
 		//Now that we have a solution, populate the level with random choices and pick one of them for our starting grid
-		for (var i = 0; i < GRID_SIZE; i++)
+		for (var i = 0; i < this.size; i++)
 		{
 			world.push([]);
 
-			for (var j = 0; j < GRID_SIZE; j++)
+			for (var j = 0; j < this.size; j++)
 			{
-				world[i].push(new cell(solution[i][j]));
+				world[i].push(new cell(solution[i][j], this.colours));
 			}
 		}
 	};
+
+	this.buildWorld();
 
 	this.getLevel = function()
 	{
 		return level;
 	}
 
-	this.draw = function()
+	this.draw = function(showSolution)
 	{
-		var cellWidth = BOX_WIDTH / GRID_SIZE;
-		var cellHeight = BOX_HEIGHT / GRID_SIZE;
+		var cellWidth = BOX_WIDTH / this.size;
+		var cellHeight = BOX_HEIGHT / this.size;
 
 		context.save();
 		context.shadowColor = 'rgba(0,0,0,0.25)';
@@ -173,8 +176,8 @@ function Grid(x, y, difficulty)
 		context.restore();
 
 		//draw cells
-		var begin = GRID_SIZE / 2 - level;
-		var end = GRID_SIZE / 2 + level;
+		var begin = this.size / 2 - level;
+		var end = this.size / 2 + level;
 
 
 		for (var a = begin; a < end; a++)
@@ -182,10 +185,10 @@ function Grid(x, y, difficulty)
 			for (var b = begin; b < end; b++)
 			{
 				var cell = world[a][b];
-				cell.draw(this.x + a * cellWidth,
-				this.y + b * cellHeight,
-				cellWidth,
-				cellHeight,
+				cell.draw(this.x + a * cellWidth + CELL_MARGIN,
+				this.y + b * cellHeight + CELL_MARGIN,
+				cellWidth - 2 * CELL_MARGIN,
+				cellHeight - 2 * CELL_MARGIN,
 				showSolution);
 			}
 		}
@@ -201,13 +204,13 @@ function Grid(x, y, difficulty)
 
 	this.getCell = function(mouseX, mouseY)
 	{
-		var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
-		var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
-		if (mouseX < this.x + (BOX_WIDTH / GRID_SIZE) * end && mouseX >= this.x + (BOX_WIDTH / GRID_SIZE) * begin && mouseY < this.y + (BOX_HEIGHT / GRID_SIZE) * end && mouseY >= this.y + (BOX_HEIGHT / GRID_SIZE) * begin)
+		var begin = this.size / 2 - Math.min(level, this.size / 2);
+		var end = this.size / 2 + Math.min(level, this.size / 2);
+		if (mouseX < this.x + (BOX_WIDTH / this.size) * end && mouseX >= this.x + (BOX_WIDTH / this.size) * begin && mouseY < this.y + (BOX_HEIGHT / this.size) * end && mouseY >= this.y + (BOX_HEIGHT / this.size) * begin)
 		{
-			var cellRow = Math.floor(((mouseX - this.x) / BOX_WIDTH) * GRID_SIZE);
-			var cellColumn = Math.floor(((mouseY - this.y) / BOX_HEIGHT) * GRID_SIZE);
-			return grid[cellRow][cellColumn];
+			var cellRow = Math.floor(((mouseX - this.x) / BOX_WIDTH) * this.size);
+			var cellColumn = Math.floor(((mouseY - this.y) / BOX_HEIGHT) * this.size);
+			return world[cellRow][cellColumn];
 		}
 		else
 		{
@@ -217,8 +220,8 @@ function Grid(x, y, difficulty)
 
 	function completed()
 	{
-		var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
-		var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
+		var begin = that.size / 2 - Math.min(level, that.size / 2);
+		var end = that.size / 2 + Math.min(level, that.size / 2);
 
 		var adjacents = [[-1, 0],
                         [1, 0],
@@ -229,7 +232,7 @@ function Grid(x, y, difficulty)
 		{
 			for (var y = begin; y < end; y++)
 			{
-				var cell = grid[x][y];
+				var cell = world[x][y];
 				for (var i = 0; i < adjacents.length; i++)
 				{
 					var x2 = x + adjacents[i][0];
@@ -238,14 +241,15 @@ function Grid(x, y, difficulty)
 					{
 						//Check if adjacent block follows the rules
 						var cell2 = world[x2][y2];
-						if (!(loop(cell2.value, 1, GRID_COLOURS.length) == cell.value || loop(cell2.value, -1, GRID_COLOURS.length) == cell.value || cell2.value == cell.value))
+						if (!(Math.loop(cell2.value, 1, that.colours.length) == cell.value || Math.loop(cell2.value, -1, that.colours.length) == cell.value || cell2.value == cell.value))
 						{
 							return false;
 						}
 					}
-				}
+				};
 			}
 		}
+
 		return true;
 	}
 }

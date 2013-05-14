@@ -6,40 +6,38 @@ function Button(text, delegate, x, y, width, height, background, foreground, bor
 	this.y = y || 0;
 	this.width = width || 0;
 	this.height = height || 0;
-	var centerX = this.x + this.width / 2;
-	var centerY = this.y + this.height / 2;
 	this.background = background || 'FFF';
 	this.foreground = foreground || '000';
 	this.border = border || '000';
 	var STATES = Object.freeze(
 	{
-		IDLE: 0;
-		HOVER: 1;
+		IDLE: 0,
+		HOVER: 1,
 		PRESSED: 2
 	});
 	this.state = STATES.IDLE;
 	var msSinceClick = 0;
 	var msSinceHover = 0;
-	this.draw = function()
+	this.draw = function(context)
 	{
 		context.save();
-		context.fillStyle = background;
+		context.fillStyle = this.background;
 		context.shadowColor = 'rgba(0,0,0,0.25)';
 		context.shadowOffsetX = 12;
 		context.shadowOffsetY = 12;
 		context.shadowBlur = 16;
-		context.fillRect(centerX - width / 2, centerY - height / 2, width, height);
+		context.fillRect(this.x, this.y, this.width, this.height);
 		context.restore();
 		context.save();
-		context.strokeStyle = buttonStroke;
-		context.strokeRect(centerX - width / 2, centerY - height / 2, width, height);
+		context.strokeStyle = this.border;
+		context.strokeRect(this.x, this.y, this.width, this.height);
 		context.restore();
 
 		context.save();
-		context.fillStyle = textFill;
+		context.fillStyle = this.foreground;
 		context.textAlign = "center";
 		context.font = "48pt Open Sans Condensed";
-		context.fillText(text, centerX, centerY + 24);
+		context.fillText(this.text, this.x + this.width / 2, this.y + this.height / 2 + 24);
 		context.restore();
 	};
 
@@ -51,20 +49,34 @@ function Button(text, delegate, x, y, width, height, background, foreground, bor
 		}
 	}
 
-	function hitTest(mouse)
+	this.mouseMoved = function(mouseX, mouseY)
 	{
-		return (mouse.x >= this.x && mouse.x <= this.x + this.width && mouse.y >= this.y && mouse.y <= this.y + this.height);
+		if (this.hitTest(mouseX, mouseY))
+		{
+			//mouse is over button
+			this.state = STATES.HOVER;
+			msSinceHover = 0;
+		}
+		else
+		{
+			this.state = STATES.IDLE;
+		}
+	}
+
+	this.hitTest = function(mouseX, mouseY)
+	{
+		return (mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height);
 	}
 	this.update = function(deltaTime)
 	{
 		//Put animations here for hovering, etc.
-		if (this.state != STATES.PRESSED && msSinceClick > 0)
+		if (this.state != STATES.PRESSED && msSinceClick < 100)
 		{
-			msSinceClick = Math.max(0, msSinceClick - deltaTime);
+			msSinceClick += deltaTime;
 		}
-		if (this.state == STATES.IDLE && msSinceHover > 0)
+		if (this.state == STATES.IDLE && msSinceHover < 100)
 		{
-			msSinceHover = Math.max(0, msSinceHover - deltaTime);
+			msSinceHover += deltaTime;
 		}
 	}
 }

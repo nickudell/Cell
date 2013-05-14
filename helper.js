@@ -1,12 +1,18 @@
-function clamp(value, min, max)
+Math.clamp = function(value, max, min)
 {
-	if (value < min)
+	if (typeof min != 'undefined')
 	{
-		return min;
+		if (value < min)
+		{
+			return min;
+		}
 	}
-	if (value > max)
+	if (typeof max != 'undefined')
 	{
-		return max;
+		if (value > max)
+		{
+			return max;
+		}
 	}
 	return value;
 };
@@ -15,6 +21,26 @@ function collides(a, b)
 {
 	return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
 };
+
+Array.prototype.pick = function(min, max)
+{
+	var minIndex = min;
+	if (typeof min == 'undefined' || min < 0 || min > this.length)
+	{
+		minIndex = 0;
+	}
+	var maxIndex = max;
+	if (typeof max == 'undefined' || max > this.length || max < min)
+	{
+		maxIndex = this.length;
+	}
+	return this[minIndex + Math.floor(Math.random() * (maxIndex - minIndex))];
+};
+
+Array.prototype.loop = function(index, change)
+{
+	return this[Math.loop(index, change, this.length)];
+}
 
 // extends 'from' object with members from 'to'. If 'to' is null, a deep clone of 'from' is returned
 
@@ -46,7 +72,7 @@ function extend(from, to)
 
 //Loop through values. Much easier than dealing with silly things
 
-function loop(value, change, maxValue)
+Math.loop = function(value, change, maxValue)
 {
 	var result = value + change;
 	while (result < 0)
@@ -54,7 +80,7 @@ function loop(value, change, maxValue)
 		result += maxValue;
 	}
 	return result % maxValue;
-}
+};
 
 //add a rounded rectangle function to context2Ds
 CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius, fill, stroke)
