@@ -116,24 +116,11 @@ var Init = function()
 
 	canvases.appendTo('body');
 
-	//Create menus
-	var controls = [new Button("New game", newGame),
-                        new Button("How to play", instructions),
-                        new Button("Credits", credits)];
+	//Create menu
+	var controls = [new Button("New game", '48pt Open Sans Condensed', newGame),
+                        new Button("How to play", '48pt Open Sans Condensed', instructions),
+                        new Button("Credits", '48pt Open Sans Condensed', credits)];
 	menus.main = new MainMenu("Cell", controls);
-	var controls = [new Button("Sponge", function()
-	{
-		gameStart(DIFFICULTIES.EASY);
-	}),
-                        new Button("Rock", function()
-	{
-		gameStart(DIFFICULTIES.MEDIUM);
-	}),
-                        new Button("Diamond", function()
-	{
-		gameStart(DIFFICULTIES.HARD);
-	})];
-	menus.difficulty = new MainMenu("How hard are you?", controls);
 
 	//Start game loop
 	awaitAssets();
@@ -144,6 +131,19 @@ function newGame()
 {
 	//Show the difficulty selection menu
 	menus.main.stop();
+	var controls = [new Button("Sponge", '48pt Open Sans Condensed', function()
+	{
+		gameStart(DIFFICULTIES.EASY);
+	}),
+                        new Button("Rock", '48pt Open Sans Condensed', function()
+	{
+		gameStart(DIFFICULTIES.MEDIUM);
+	}),
+                        new Button("Diamond", '48pt Open Sans Condensed', function()
+	{
+		gameStart(DIFFICULTIES.HARD);
+	})];
+	menus.difficulty = new MainMenu("How hard are you?", controls);
 	menus.difficulty.loop();
 }
 
