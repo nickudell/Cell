@@ -2,7 +2,10 @@
 var CANVAS_WIDTH = 720;
 var CANVAS_HEIGHT = 720;
 
+var GRID_WIDTH = 640;
+var GRID_HEIGHT = 640;
 
+var GRID_MARGIN = 16;
 
 var canvas;
 var context;
@@ -16,11 +19,6 @@ var prevTime = Date.now();
 var timeString;
 
 
-var difficulty = 1;
-var showOptions = true;
-var showChecks = true;
-
-
 
 var imageURLS = ["images/tick.png"];
 
@@ -30,6 +28,12 @@ var clicks = 0;
 
 var tick = 0;
 var messageTick = -1;
+
+var DIFFICULTIES = {
+	EASY: 0,
+	MEDIUM: 1,
+	HARD: 2
+};
 var loadingStrings = ["Doing something or other.",
                         "Testing flux.",
                         "Establishing link to the thunder cloud.",
@@ -44,8 +48,7 @@ var loadingStrings = ["Doing something or other.",
                         "Making the best Moroccan tagine you've ever seen.",
                         "Crying and watching Rom Coms.",
                         "Manscaping.",
-                        "Solving world hunger.",
-                        "Don't tell Notch or he'll be mad."]
+                        "Solving world hunger."]
 var winStrings = ["You are the awesomest. Is that a word? Awesomest?",
                         "Way to go there, buddy.",
                         "At long last, your [INSERT FATHER FIGURE HERE] is proud.",
@@ -70,32 +73,56 @@ var mouse = {
 	currentCell: -1
 };
 
+var menu;
+
+function gameStart(difficulty)
+{
+	menu.stop();
+	//initialise a new game
+	grid = new Grid(GRID_MARGIN, GRID_MARGIN, GRID_WIDTH, GRID_HEIGHT, difficulty);
+	canvas.addEventListener('click', canvasClicked, true); //add non-menu click event listener
+	canvas.addEventListener('mousemove', function(e)
+	{
+		mouse.x = e.offsetX;
+		mouse.y = e.offsetY;
+		mouse.currentCell = grid.getCell(mouse.x, mouse.y);
+	});
+	Tick();
+}
+
 //Initialize variables and start the game
 var Init = function()
 {
+
 	console.log("Initialization entered.")
 	//Get the canvas
 	var canvases = $("<canvas id='canvas' width='" + CANVAS_WIDTH +
 		"' height='" + CANVAS_HEIGHT + "'></canvas");
 	canvas = canvases[0];
-	canvas.addEventListener('click', canvasClicked, true);
 	canvas.addEventListener('selectstart', function(e)
 	{
 		e.preventDefault();
 		return false;
 	});
-	canvas.addEventListener('mousemove', function(e)
-	{
-		mouse.x = e.offsetX;
-		mouse.y = e.offsetY;
-		mouse.currentCell = getCell(mouse.x, mouse.y);
-	})
+
 
 	context = canvas.getContext("2d");
 
 	canvases.appendTo('body');
 
-	buildWorld();
+	//Create main menu
+	var controls = [new Button("New game", '48pt Open Sans Condensed', newGame),
+                        new Button("How to play", '48pt Open Sans Condensed', instructions),
+                        new Button("Credits", '48pt Open Sans Condensed', credits)];
+	controls.forEach(function(control)
+	{
+		control.width = CANVAS_WIDTH * 0.5;
+		control.height = 96;
+		control.background = 'FFF';
+		control.foreground = '444';
+		control.margin = 32;
+	})
+	menu = new MainMenu("Cell", controls);
 
 	//Start game loop
 	awaitAssets();
@@ -104,83 +131,62 @@ var Init = function()
 
 function newGame()
 {
-	var titleHeight = 128;
-	var grd = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-	grd.addColorStop(0, '005');
-	grd.addColorStop(1, '05F');
-	Clear(grd);
+	//Show the difficulty selection menu
+	menu.stop();
+	var controls = [new Button("Sponge", '48pt Open Sans Condensed', function()
+	{
+		gameStart(DIFFICULTIES.EASY);
+	}),
+                    new Button("Rock", '48pt Open Sans Condensed', function()
+	{
+		gameStart(DIFFICULTIES.MEDIUM);
+	}),
+                    new Button("Diamond", '48pt Open Sans Condensed', function()
+	{
+		gameStart(DIFFICULTIES.HARD);
+	})];
+	controls.forEach(function(control)
+	{
+		control.width = CANVAS_WIDTH * 0.5;
+		control.height = 96;
+		control.background = 'FFF';
+		control.foreground = '444';
+		control.margin = 32;
+	})
+	menu = new MainMenu("How hard are you?", controls);
+	menu.loop();
+}
 
-	context.save();
-	context.fillStyle = 'FFF';
-	context.textAlign = "center";
-	context.font = "78pt Open Sans Condensed";
-	context.fillText("Cell", CANVAS_WIDTH / 2, titleHeight);
-	context.restore();
-
-	var centerX = CANVAS_WIDTH / 2;
-	var centerY = titleHeight + 96;
-	var buttonWidth = 320;
-	var buttonHeight = 96;
-	var buttonMargin = 32;
-	var buttonFill = 'FFF'
-	var textFill = '444';
-
-	drawButton(context, 'New Game', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
-	centerY += buttonHeight + buttonMargin;
-	drawButton(context, 'Instructions', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
-	centerY += buttonHeight + buttonMargin;
-	drawButton(context, 'Options', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
-	centerY += buttonHeight + buttonMargin;
-	drawButton(context, 'Credits', centerX, centerY, buttonWidth, buttonHeight, buttonFill, textFill);
-	centerY += buttonHeight + buttonMargin;
-
-	loopTimeout = setTimeout(newGame, 1000 / FPS);
-};
-
-function drawButton(context, text, centerX, centerY, width, height, buttonFill, textFill, buttonStroke)
+function instructions()
 {
-	context.save();
-	context.fillStyle = buttonFill;
-	context.shadowColor = 'rgba(0,0,0,0.25)';
-	context.shadowOffsetX = 12;
-	context.shadowOffsetY = 12;
-	context.shadowBlur = 16;
-	context.fillRect(centerX - width / 2, centerY - height / 2, width, height);
-	context.restore();
-	context.save();
-	context.strokeStyle = buttonStroke;
-	context.strokeRect(centerX - width / 2, centerY - height / 2, width, height);
-	context.restore();
+	//Tell newbies how to play
+	menu.stop();
 
-	context.save();
-	context.fillStyle = textFill;
-	context.textAlign = "center";
-	context.font = "48pt Open Sans Condensed";
-	context.fillText(text, centerX, centerY + 24);
-	context.restore();
+	var controls = [new Label("Each cell has a colour. The colour can be changed by clicking on it."),
+                        new Label("A cell can be changed only to a set number of colours."),
+                        new Label("The colour guide on the right of the grid shows the order of the colours."),
+                        new Label("You can see which colours are available for the current cell on the colour guide."),
+                        new Label("Colours from one end of the guide will wrap around to the other."),
+                        new Label("To win, each cell must have either the same colour as its surrounding cells"),
+                        new Label("or one colour above or below the colours of its surrounding cells."),
+                        new Label("Sounds easy right?"),
+                        new Button("Let's play", null, newGame)];
+	controls.forEach(function(control)
+	{
+		control.width = CANVAS_WIDTH * 0.75;
+		control.height = 96;
+		control.font = '24pt Open Sans Condensed';
+		control.background = 'FFF';
+		control.foreground = '444';
+		control.margin = 32;
+	})
+	menu = new MainMenu("How to play", controls);
+	menu.loop();
 }
 
 function credits()
 {
-	var grd = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-	grd.addColorStop(0, '005');
-	grd.addColorStop(1, '05F');
-	Clear(grd);
-	context.save();
-	context.fillStyle = 'FFF';
-	context.textAlign = "center";
-	context.font = "78pt Open Sans Condensed";
-	context.fillText("YOU WIN", CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
-	context.restore();
-
-	context.save();
-	context.fillStyle = 'FFF';
-	context.textAlign = "center";
-	context.font = "16pt Roboto";
-	context.fillText(winStrings[Math.floor(Math.random() * winStrings.length)], CANVAS_WIDTH / 2, (CANVAS_HEIGHT / 2) + 96);
-	context.restore();
-
-	context.fillText("Clicks: " + clicks, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 64);
+	//Show my name literally thousands of times
 }
 
 function awaitAssets()
@@ -212,8 +218,7 @@ function awaitAssets()
 			icons.push(sprite);
 		}
 		//Start game loop
-		Tick();
-		//newGame();
+		menu.loop();
 	}
 	else
 	{
@@ -227,7 +232,7 @@ function awaitAssets()
 			loadText += ".";
 			numPips++;
 		}
-		message = loop(message, 1, loadingStrings.length);
+		message = Math.loop(message, 1, loadingStrings.length);
 		context.save();
 		context.textAlign = "left";
 		context.font = "64pt Open Sans Condensed";
@@ -239,7 +244,7 @@ function awaitAssets()
 		context.font = "16pt Roboto";
 		context.fillText(loadingStrings[message], CANVAS_WIDTH / 2, barY + 96);
 		context.restore();
-		tick = loop(tick, 1, 4);
+		tick = Math.loop(tick, 1, 4);
 		loopTimeout = setTimeout(awaitAssets, 2000);
 	}
 };
@@ -251,7 +256,7 @@ function canvasClicked(e)
 	//Get which cell was clicked
 	var relX = e.offsetX;
 	var relY = e.offsetY;
-	var cell = getCell(relX, relY);
+	var cell = grid.getCell(relX, relY);
 	//check that a cell has been clicked
 	if (cell != -1)
 	{
@@ -304,110 +309,10 @@ var Clear = function(colour)
 };
 
 
-
-function buildWorld()
-{
-	var solution = [];
-	//try to build a solved level, then add random extra data to make it harder
-	for (var i = 0; i < GRID_SIZE; i++)
-	{
-		solution.push([]);
-		for (var j = 0; j < GRID_SIZE; j++)
-		{
-			solution[i].push(-1);
-		}
-	}
-	//now work out from there
-	for (var x = 0; x < GRID_SIZE; x++)
-	{
-		for (var y = 0; y < GRID_SIZE; y++)
-		{
-			var allowedColours;
-			if (x - 1 < 0)
-			{
-				if (y - 1 < 0)
-				{
-					//First block is set to a random colour
-					allowedColours = [Math.floor(Math.random() * GRID_COLOURS.length)];
-				}
-				else
-				{
-					//Only have top for reference
-					var same = solution[x][y - 1];
-					var up = loop(same, 1, GRID_COLOURS.length);
-					var down = loop(same, -1, GRID_COLOURS.length);
-					allowedColours = [same, up, down];
-				}
-			}
-			else
-			{
-				if (y - 1 < 0)
-				{
-					//Only have left for reference
-					var same = solution[x - 1][y];
-					var up = loop(same, 1, GRID_COLOURS.length);
-					var down = loop(same, -1, GRID_COLOURS.length);
-					allowedColours = [same, up, down];
-				}
-				else
-				{
-					//Have both for reference
-					var top = solution[x][y - 1];
-					var left = solution[x - 1][y];
-					if (top == left)
-					{
-						var up = loop(top, 1, GRID_COLOURS.length);
-						var down = loop(top, -1, GRID_COLOURS.length);
-						allowedColours = [top, up, down];
-					}
-					else
-					{
-						//find the colours in common to the two surrounding colours
-						var up1 = loop(top, 1, GRID_COLOURS.length);
-						var down1 = loop(top, -1, GRID_COLOURS.length);
-						var up2 = loop(left, 1, GRID_COLOURS.length);
-						var down2 = loop(left, -1, GRID_COLOURS.length);
-						allowedColours = [];
-						if (up1 == left || up1 == down2)
-						{
-							allowedColours.push(up1);
-						}
-						if (down1 == left || down1 == up2)
-						{
-							allowedColours.push(down1);
-						}
-						if (top == up2 || top == down2)
-						{
-							allowedColours.push(top);
-						}
-					}
-				}
-			}
-			var result = allowedColours[Math.floor(Math.random() * allowedColours.length)];
-			solution[x][y] = result;
-		}
-	}
-	grid = [];
-	world = [];
-	//Now that we have a solution, populate the level with random choices and pick one of them for our starting grid
-	for (var i = 0; i < GRID_SIZE; i++)
-	{
-		grid.push([]);
-
-		for (var j = 0; j < GRID_SIZE; j++)
-		{
-			grid[i].push(new cell(solution[i][j]));
-		}
-	}
-}
-
 var Update = function(deltaTime)
 {
-	if (completed())
-	{
-		level++;
-	}
-	if (level > GRID_SIZE / 2)
+	grid.update(deltaTime);
+	if (grid.level > grid.size / 2)
 	{
 		clearTimeout(loopTimeout);
 		isPlaying = false;
@@ -433,7 +338,7 @@ function win()
 	context.fillStyle = 'FFF';
 	context.textAlign = "center";
 	context.font = "16pt Roboto";
-	context.fillText(winStrings[Math.floor(Math.random() * winStrings.length)], CANVAS_WIDTH / 2, (CANVAS_HEIGHT / 2) + 96);
+	context.fillText(winStrings.pick(), CANVAS_WIDTH / 2, (CANVAS_HEIGHT / 2) + 96);
 	context.restore();
 
 	context.fillText("Clicks: " + clicks, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 64);
@@ -444,31 +349,49 @@ function getColour(colour)
 	return 'rgb(' + colour[0] + ',' + colour[1] + ',' + colour[2] + ')';
 }
 
+var Draw = function()
+{
+	//draw grid
+	grid.draw();
+	//Add colour guide:
+
+	var guideX = GRID_MARGIN + GRID_WIDTH + 16;
+	var guideY = GRID_MARGIN + 16;
+	context.strokeStyle = '000';
+	context.lineWidth = 2;
+	context.save();
+
+	for (var i = 0; i < grid.colours.length; i++)
+	{
+		drawGuide(i, guideX, guideY);
+		guideY += 48;
+	}
+
+	context.restore();
+
+	context.fillStyle = "000"
+	context.font = "18pt Roboto";
+	context.textAlign = "center";
+
+	var textX = GRID_MARGIN + GRID_WIDTH / 2;
+	var textY = GRID_MARGIN + GRID_HEIGHT + 40;
+	context.fillText("Clicks: " + clicks, textX, textY);
+
+};
+
 function getFillStyle(colour, x, y, width, height)
 {
 	var delta = 32;
 	var lighter = extend(colour);
 	var darker = extend(colour);
-	for (var j = 0; j < lighter.length; j++)
+	lighter.forEach(function(colour)
 	{
-		if (lighter[j] < (255 - delta))
-		{
-			lighter[j] += delta;
-		}
-		else
-		{
-			lighter[j] = 255;
-		}
-
-		if (darker[j] > delta)
-		{
-			darker[j] -= delta;
-		}
-		else
-		{
-			darker[j] = 0;
-		}
-	}
+		colour = Math.min(colour + delta, 255);
+	});
+	darker.forEach(function(colour)
+	{
+		colour = Math.max(colour - delta, 0);
+	});
 
 	var grd = context.createRadialGradient(x, y, 1, x, y, width);
 	grd.addColorStop(0, getColour(lighter));
@@ -476,102 +399,55 @@ function getFillStyle(colour, x, y, width, height)
 	return grd;
 }
 
-var Draw = function()
+function drawGuide(colour, guideX, guideY)
 {
-	var cellWidth = BOX_WIDTH / GRID_SIZE;
-	var cellHeight = BOX_HEIGHT / GRID_SIZE;
-
-	context.save();
-	context.shadowColor = 'rgba(0,0,0,0.25)';
-	context.shadowOffsetX = 16;
-	context.shadowOffsetY = 16;
-	context.shadowBlur = 32;
-	context.fillStyle = 'FFF';
-	context.fillRect(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH, BOX_HEIGHT);
-	context.restore();
-
-	//draw cells
-	var begin = GRID_SIZE / 2 - level;
-	var end = GRID_SIZE / 2 + level;
-
-
-	for (var a = begin; a < end; a++)
+	context.shadowColor = '444';
+	context.shadowOffsetX = 2;
+	context.shadowOffsetY = 2;
+	context.shadowBlur = 4;
+	if (mouse.currentCell != -1)
 	{
-		for (var b = begin; b < end; b++)
+		if (mouse.currentCell.value == colour)
 		{
-			var cell = grid[a][b];
-			cell.draw(BOX_MARGIN + a * cellWidth, BOX_MARGIN + b * cellHeight, cellWidth, cellHeight, showSolution);
-		}
-	}
-	//Add colour guide:
-
-	var guideX = BOX_MARGIN + BOX_WIDTH + 16;
-	var guideY = BOX_MARGIN + 16;
-	context.strokeStyle = '000';
-	context.lineWidth = 2;
-	context.save();
-
-	for (var i = 0; i < GRID_COLOURS.length; i++)
-	{
-		context.shadowColor = '444';
-		context.shadowOffsetX = 2;
-		context.shadowOffsetY = 2;
-		context.shadowBlur = 4;
-		if (mouse.currentCell != -1)
-		{
-			if (mouse.currentCell.value == i)
-			{
-				context.lineWidth = 3;
-				context.strokeStyle = 'FFF';
-			}
-			else
-			{
-				context.strokeStyle = '000';
-				context.lineWidth = 2;
-			}
-
-			context.fillStyle = getFillStyle(GRID_COLOURS[i], guideX, guideY, 32, 0);
-			context.fillRect(guideX, guideY, 32, 32);
-			context.shadowColor = 'rgba(0,0,0,0)';
-			context.strokeRect(guideX, guideY, 32, 32);
-
-			var isOption = false;
-
-			for (var j = 0; j < mouse.currentCell.options.length; j++)
-			{
-				if (mouse.currentCell.options[j] == i)
-				{
-					isOption = true;
-					break;
-				}
-			}
-
-			if (!isOption)
-			{
-				///context.shadowColor = '444';
-				context.fillStyle = 'rgba(0,0,0,0.5)';
-				context.fillRect(guideX, guideY, 32, 32);
-			}
+			context.lineWidth = 3;
+			context.strokeStyle = 'FFF';
 		}
 		else
 		{
-			context.fillStyle = getFillStyle(GRID_COLOURS[i], guideX, guideY, 32, 0);
-			context.fillRect(guideX, guideY, 32, 32);
-			context.shadowColor = 'rgba(0,0,0,0)';
-			context.strokeRect(guideX, guideY, 32, 32);
+			context.strokeStyle = '000';
+			context.lineWidth = 2;
 		}
-		guideY += 48;
+
+		context.fillStyle = getFillStyle(grid.colours[colour], guideX, guideY, 32, 0);
+		context.fillRect(guideX, guideY, 32, 32);
+		context.shadowColor = 'rgba(0,0,0,0)';
+		context.strokeRect(guideX, guideY, 32, 32);
+
+		var isOption = false;
+
+		for (var j = 0; j < mouse.currentCell.options.length; j++)
+		{
+			if (mouse.currentCell.options[j] == colour)
+			{
+				isOption = true;
+				break;
+			}
+		}
+
+		if (!isOption)
+		{
+			///context.shadowColor = '444';
+			context.fillStyle = 'rgba(0,0,0,0.7)';
+			context.fillRect(guideX, guideY, 32, 32);
+		}
 	}
-	context.restore();
-
-	context.fillStyle = "000"
-	context.font = "18pt Roboto";
-	context.textAlign = "center";
-
-	var textX = BOX_MARGIN + BOX_WIDTH / 2;
-	var textY = BOX_MARGIN + BOX_HEIGHT + 40;
-	context.fillText("Clicks: " + clicks, textX, textY);
-
-};
+	else
+	{
+		context.fillStyle = getFillStyle(grid.colours[colour], guideX, guideY, 32, 0);
+		context.fillRect(guideX, guideY, 32, 32);
+		context.shadowColor = 'rgba(0,0,0,0)';
+		context.strokeRect(guideX, guideY, 32, 32);
+	}
+}
 
 Init();
