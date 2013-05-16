@@ -131,7 +131,7 @@ Stack.prototype.arrange = function()
 		control.y = centerY - control.height / 2;
 		centerY += control.height + control.margin;
 	});
-}
+};
 Stack.prototype.draw = function(context)
 {
 	//draw background
@@ -140,4 +140,28 @@ Stack.prototype.draw = function(context)
 	{
 		control.draw(context);
 	});
+};
+Stack.prototype.click = function(mouse)
+{
+	var handled = false;
+	controls.forEach(function(control)
+	{
+		if (control.hitTest(mouse.x, mouse.y))
+		{
+			if (typeof control.click == 'function')
+			{
+				handled |= control.click(mouse);
+			}
+		}
+	});
+	if (handled)
+	{
+		e.stopPropagation();
+	}
+};
+
+function ScrollStack(controls, x, y, width, height, background, border, margin)
+{
+	Stack.call(this, controls, x, y, width, height, background, border, margin);
+
 }
