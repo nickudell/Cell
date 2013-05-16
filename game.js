@@ -48,8 +48,7 @@ var loadingStrings = ["Doing something or other.",
                         "Making the best Moroccan tagine you've ever seen.",
                         "Crying and watching Rom Coms.",
                         "Manscaping.",
-                        "Solving world hunger.",
-                        "Don't tell Notch or he'll be mad."]
+                        "Solving world hunger."]
 var winStrings = ["You are the awesomest. Is that a word? Awesomest?",
                         "Way to go there, buddy.",
                         "At long last, your [INSERT FATHER FIGURE HERE] is proud.",
@@ -74,16 +73,11 @@ var mouse = {
 	currentCell: -1
 };
 
-var menus = {
-	main: null,
-	credits: null,
-	difficulty: null,
-	howto: null
-};
+var menu;
 
 function gameStart(difficulty)
 {
-	menus.difficulty.stop();
+	menu.stop();
 	//initialise a new game
 	grid = new Grid(GRID_MARGIN, GRID_MARGIN, GRID_WIDTH, GRID_HEIGHT, difficulty);
 	canvas.addEventListener('click', canvasClicked, true); //add non-menu click event listener
@@ -116,11 +110,19 @@ var Init = function()
 
 	canvases.appendTo('body');
 
-	//Create menu
+	//Create main menu
 	var controls = [new Button("New game", '48pt Open Sans Condensed', newGame),
                         new Button("How to play", '48pt Open Sans Condensed', instructions),
                         new Button("Credits", '48pt Open Sans Condensed', credits)];
-	menus.main = new MainMenu("Cell", controls);
+	controls.forEach(function(control)
+	{
+		control.width = CANVAS_WIDTH * 0.5;
+		control.height = 96;
+		control.background = 'FFF';
+		control.foreground = '444';
+		control.margin = 32;
+	})
+	menu = new MainMenu("Cell", controls);
 
 	//Start game loop
 	awaitAssets();
@@ -130,26 +132,56 @@ var Init = function()
 function newGame()
 {
 	//Show the difficulty selection menu
-	menus.main.stop();
+	menu.stop();
 	var controls = [new Button("Sponge", '48pt Open Sans Condensed', function()
 	{
 		gameStart(DIFFICULTIES.EASY);
 	}),
-                        new Button("Rock", '48pt Open Sans Condensed', function()
+                    new Button("Rock", '48pt Open Sans Condensed', function()
 	{
 		gameStart(DIFFICULTIES.MEDIUM);
 	}),
-                        new Button("Diamond", '48pt Open Sans Condensed', function()
+                    new Button("Diamond", '48pt Open Sans Condensed', function()
 	{
 		gameStart(DIFFICULTIES.HARD);
 	})];
-	menus.difficulty = new MainMenu("How hard are you?", controls);
-	menus.difficulty.loop();
+	controls.forEach(function(control)
+	{
+		control.width = CANVAS_WIDTH * 0.5;
+		control.height = 96;
+		control.background = 'FFF';
+		control.foreground = '444';
+		control.margin = 32;
+	})
+	menu = new MainMenu("How hard are you?", controls);
+	menu.loop();
 }
 
 function instructions()
 {
 	//Tell newbies how to play
+	menu.stop();
+
+	var controls = [new Label("Each cell has a colour. The colour can be changed by clicking on it."),
+                        new Label("A cell can be changed only to a set number of colours."),
+                        new Label("The colour guide on the right of the grid shows the order of the colours."),
+                        new Label("You can see which colours are available for the current cell on the colour guide."),
+                        new Label("Colours from one end of the guide will wrap around to the other."),
+                        new Label("To win, each cell must have either the same colour as its surrounding cells"),
+                        new Label("or one colour above or below the colours of its surrounding cells."),
+                        new Label("Sounds easy right?"),
+                        new Button("Let's play", null, newGame)];
+	controls.forEach(function(control)
+	{
+		control.width = CANVAS_WIDTH * 0.75;
+		control.height = 96;
+		control.font = '24pt Open Sans Condensed';
+		control.background = 'FFF';
+		control.foreground = '444';
+		control.margin = 32;
+	})
+	menu = new MainMenu("How to play", controls);
+	menu.loop();
 }
 
 function credits()
@@ -186,8 +218,7 @@ function awaitAssets()
 			icons.push(sprite);
 		}
 		//Start game loop
-		//Tick();
-		menus.main.loop();
+		menu.loop();
 	}
 	else
 	{
@@ -281,7 +312,7 @@ var Clear = function(colour)
 var Update = function(deltaTime)
 {
 	grid.update(deltaTime);
-	if (grid.getLevel() > grid.size / 2)
+	if (grid.level > grid.size / 2)
 	{
 		clearTimeout(loopTimeout);
 		isPlaying = false;

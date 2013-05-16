@@ -3,24 +3,25 @@ function Cell(solution, colours)
 	this.options = [];
 	this.solution = solution || 0;
 
-	var GRID_COLOURS = colours;
+	this._colours = colours;
 
-	for (var k = 0; k < GRID_COLOURS.length; k++)
+	for (var k = 0; k < this._colours.length; k++)
 	{
 		if (k == this.solution || Math.floor(Math.random() * 2))
 		{
 			this.options.push(k);
 		}
 	}
-	var optionIndex = Math.floor(Math.random() * this.options.length);
-	this.value = this.options[optionIndex];
+
+	this._optionIndex = Math.floor(Math.random() * this.options.length);
+	this.value = this.options[this._optionIndex];
 	this.locked = (this.options.length == 1)
 	this.certain = false;
 }
 Cell.prototype.cycle = function()
 {
-	optionIndex = Math.loop(optionIndex, 1, this.options.length);
-	this.value = this.options[optionIndex];
+	this._optionIndex = Math.loop(this._optionIndex, 1, this.options.length);
+	this.value = this.options[this._optionIndex];
 };
 Cell.prototype.draw = function(x, y, width, height, solution)
 {
@@ -31,7 +32,7 @@ Cell.prototype.draw = function(x, y, width, height, solution)
 	context.shadowBlur = 8;
 
 	var colour = solution ? this.solution : this.value;
-	context.fillStyle = this.getFillStyle(GRID_COLOURS[colour],
+	context.fillStyle = this.getFillStyle(this._colours[colour],
 	x + width / 2,
 	y + height / 2,
 	width);
@@ -47,7 +48,6 @@ Cell.prototype.draw = function(x, y, width, height, solution)
 		context.shadowOffsetY = 2;
 		context.shadowBlur = 2;
 		icons[0].draw(context, x + 8, y + 8, width - 16, height - 16);
-
 	}
 	context.restore();
 };

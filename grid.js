@@ -2,14 +2,14 @@ function Grid(x, y, width, height, difficulty)
 {
 	this.world = [];
 	this.level = 1;
-	this.BOX_WIDTH = Object.freeze(width || 640);
-	this.BOX_HEIGHT = height || 640;
+	this.width = width || 640;
+	this.height = height || 640;
 	this.x = x || 0;
 	this.y = y || 0;
 
 	this.size = 0;
 
-	var CELL_MARGIN = 4;
+	this.cellMargin = 4;
 
 	var COLOURS = [[255, 0, 0],
                     [255, 128, 0],
@@ -40,7 +40,7 @@ function Grid(x, y, width, height, difficulty)
 		case 2:
 			//hard
 			this.colours = COLOURS;
-			CELL_MARGIN = 2;
+			this.cellMargin = 2;
 			this.size = 32;
 			showChecks = false;
 			showOptions = false;
@@ -50,53 +50,7 @@ function Grid(x, y, width, height, difficulty)
 	var that = this;
 
 	this.buildWorld();
-
-
-	function completed()
-	{
-		var begin = that.size / 2 - Math.min(level, that.size / 2);
-		var end = that.size / 2 + Math.min(level, that.size / 2);
-
-		var adjacents = [[-1, 0],
-                        [1, 0],
-                        [0, -1],
-                        [0, 1]];
-
-		for (var x = begin; x < end; x++)
-		{
-			for (var y = begin; y < end; y++)
-			{
-				var cell = world[x][y];
-				for (var i = 0; i < adjacents.length; i++)
-				{
-					var x2 = x + adjacents[i][0];
-					var y2 = y + adjacents[i][1];
-					if (x2 >= begin && y2 >= begin && x2 < end && y2 < end)
-					{
-						//Check if adjacent block follows the rules
-						var cell2 = world[x2][y2];
-						if (!(Math.loop(cell2.value, 1, that.colours.length) == cell.value || Math.loop(cell2.value, -1, that.colours.length) == cell.value || cell2.value == cell.value))
-						{
-							return false;
-						}
-					}
-				};
-			}
-		}
-
-		return true;
-	}
 }
-
-Grid.prototype.getWidth = function()
-{
-	return BOX_WIDTH;
-};
-
-Grid.prototype.getHeight = function()
-{
-	return BOX_HEIGHT;
-};
 
 Grid.prototype.buildWorld = function()
 {
@@ -195,8 +149,8 @@ Grid.prototype.buildWorld = function()
 
 Grid.prototype.draw = function(showSolution)
 {
-	var cellWidth = BOX_WIDTH / this.size;
-	var cellHeight = BOX_HEIGHT / this.size;
+	var cellWidth = this.width / this.size;
+	var cellHeight = this.height / this.size;
 
 	context.save();
 	context.shadowColor = 'rgba(0,0,0,0.25)';
@@ -204,49 +158,86 @@ Grid.prototype.draw = function(showSolution)
 	context.shadowOffsetY = 16;
 	context.shadowBlur = 32;
 	context.fillStyle = 'FFF';
-	context.fillRect(this.x, this.y, BOX_WIDTH, BOX_HEIGHT);
+	context.fillRect(this.x, this.y, this.width, this.height);
 	context.restore();
 
 	//draw cells
-	var begin = this.size / 2 - level;
-	var end = this.size / 2 + level;
+	var bounds = this.getBounds();
 
 
-	for (var a = begin; a < end; a++)
+	for (var a = bounds.begin; a < bounds.end; a++)
 	{
-		for (var b = begin; b < end; b++)
+		for (var b = bounds.begin; b < bounds.end; b++)
 		{
 			var cell = this.world[a][b];
-			cell.draw(this.x + a * cellWidth + CELL_MARGIN,
-			this.y + b * cellHeight + CELL_MARGIN,
-			cellWidth - 2 * CELL_MARGIN,
-			cellHeight - 2 * CELL_MARGIN,
+			cell.draw(this.x + a * cellWidth + this.cellMargin,
+			this.y + b * cellHeight + this.cellMargin,
+			cellWidth - 2 * this.cellMargin,
+			cellHeight - 2 * this.cellMargin,
 			showSolution);
 		}
 	}
 };
-
-Grid.prototype.getLevel = function()
-{
-	return this.level;
-}
 Grid.prototype.update = function(deltaTime)
 {
-	if (this.completed())
+	if (this._completed())
 	{
 		this.level++;
 	}
 }
 
+Grid.prototype._completed = function()
+{
+	var bounds = this.getBounds();
+
+	var adjacents = [[-1, 0],
+                        [1, 0],
+                        [0, -1],
+                        [0, 1]];
+
+	for (var x = bounds.begin; x < bounds.end; x++)
+	{
+		for (var y = bounds.begin; y < bounds.end; y++)
+		{
+			var cell = this.world[x][y];
+			for (var i = 0; i < adjacents.length; i++)
+			{
+				var x2 = x + adjacents[i][0];
+				var y2 = y + adjacents[i][1];
+				if (x2 >= bounds.begin && y2 >= bounds.begin && x2 < bounds.end && y2 < bounds.end)
+				{
+					//Check if adjacent block follows the rules
+					var cell2 = this.world[x2][y2];
+					if (!(Math.loop(cell2.value, 1, this.colours.length) == cell.value || Math.loop(cell2.value, -1, this.colours.length) == cell.value || cell2.value == cell.value))
+					{
+						return false;
+					}
+				}
+			};
+		}
+	}
+
+	return true;
+}
+
+Grid.prototype.getBounds = function()
+{
+	var begin = this.size / 2 - Math.min(this.level, this.size / 2);
+	var end = this.size / 2 + Math.min(this.level, this.size / 2);
+	return {
+		begin: begin,
+		end: end
+	};
+}
+
 Grid.prototype.getCell = function(mouseX, mouseY)
 {
-	var begin = this.size / 2 - Math.min(level, this.size / 2);
-	var end = this.size / 2 + Math.min(level, this.size / 2);
-	if (mouseX < this.x + (BOX_WIDTH / this.size) * end && mouseX >= this.x + (BOX_WIDTH / this.size) * begin && mouseY < this.y + (BOX_HEIGHT / this.size) * end && mouseY >= this.y + (BOX_HEIGHT / this.size) * begin)
+	var bounds = this.getBounds();
+	if (mouseX < this.x + (this.width / this.size) * bounds.end && mouseX >= this.x + (this.width / this.size) * bounds.begin && mouseY < this.y + (this.height / this.size) * bounds.end && mouseY >= this.y + (this.height / this.size) * bounds.begin)
 	{
-		var cellRow = Math.floor(((mouseX - this.x) / BOX_WIDTH) * this.size);
-		var cellColumn = Math.floor(((mouseY - this.y) / BOX_HEIGHT) * this.size);
-		return world[cellRow][cellColumn];
+		var cellRow = Math.floor(((mouseX - this.x) / this.width) * this.size);
+		var cellColumn = Math.floor(((mouseY - this.y) / this.height) * this.size);
+		return this.world[cellRow][cellColumn];
 	}
 	else
 	{

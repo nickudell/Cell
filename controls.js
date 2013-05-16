@@ -5,15 +5,15 @@ var CONTROL_STATES = Object.freeze(
 	PRESSED: 2
 });
 
-function Control(x, y, width, height, background, foreground, border)
+function Control(x, y, width, height, background, border, margin)
 {
 	this.x = x || 0;
 	this.y = y || 0;
 	this.width = width || 0;
 	this.height = height || 0;
 	this.background = background || 'FFF';
-	this.foreground = foreground || '000';
 	this.border = border || '000';
+	this.margin = margin || 0;
 
 	this.state = CONTROL_STATES.IDLE;
 	this._msSinceClick = 0;
@@ -69,15 +69,16 @@ Control.prototype.draw = function(context)
 	context.restore();
 };
 
-function Label(text, font, x, y, width, height, background, foreground, border)
+function Label(text, font, x, y, width, height, background, foreground, border, margin)
 {
-	Control.call(this, x, y, width, height, background, foreground, border);
+	Control.call(this, x, y, width, height, background, border, margin);
 	this.text = text || "";
+	this.foreground = foreground || '000';
 	this.font = font || "24pt Arial";
 };
 Label.prototype = Object.create(Control.prototype);
 Label.prototype.constructor = Label;
-Label.prototype.draw = function(context, x, y, width, height)
+Label.prototype.draw = function(context)
 {
 	Control.prototype.draw.call(this, context);
 
@@ -85,13 +86,15 @@ Label.prototype.draw = function(context, x, y, width, height)
 	context.fillStyle = this.foreground;
 	context.textAlign = "center";
 	context.font = this.font;
-	context.fillText(this.text, this.x + this.width / 2, this.y + this.height / 2 + 24);
+	context.textBaseline = 'top';
+	var measure = context.measureText2(this.text, this.width);
+	context.wrapText(this.text, this.x + this.width / 2, this.y + (this.height / 2) - (measure.height / 2), this.width);
 	context.restore();
 };
 
-function Button(text, font, delegate, x, y, width, height, background, foreground, border)
+function Button(text, font, delegate, x, y, width, height, background, foreground, border, margin)
 {
-	Label.call(this, text, font, x, y, width, height, background, foreground, border);
+	Label.call(this, text, font, x, y, width, height, background, foreground, border, margin);
 	this.delegate = delegate || {};
 }
 Button.prototype = Object.create(Label.prototype);
@@ -105,3 +108,36 @@ Button.prototype.click = function()
 	}
 	return true;
 };
+
+function Stack(controls, x, y, width, height, background, border, margin)
+{
+	Control.call(this, x, y, width, height, background, border, margin);
+	this.controls = controls || [];
+	this.arrange();
+}
+Stack.prototype = Object.create(Control.prototype);
+Stack.prototype.constructor = Stack;
+
+Stack.prototype.arrange = function()
+{
+	var that = this;
+	var centerX = this.width / 2;
+	var centerY = this.margin;
+
+	//position controls
+	this.controls.forEach(function(control)
+	{
+		control.x = centerX - control.width / 2;
+		control.y = centerY - control.height / 2;
+		centerY += control.height + control.margin;
+	});
+}
+Stack.prototype.draw = function(context)
+{
+	//draw background
+	Control.prototype.draw.call(this, context);
+	controls.forEach(function(control)
+	{
+		control.draw(context);
+	});
+}

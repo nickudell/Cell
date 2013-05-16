@@ -119,3 +119,76 @@ CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, rad
 		this.fill();
 	}
 };
+
+CanvasRenderingContext2D.prototype.wrapText = function(text, x, y, maxWidth)
+{
+	var words = text.split(' ');
+	var line = '';
+
+	for (var n = 0; n < words.length; n++)
+	{
+		var testLine = line + words[n] + ' ';
+		var metrics = this.measureText2(testLine);
+		var testWidth = metrics.width;
+		if (testWidth > maxWidth)
+		{
+			this.fillText(line, x, y);
+			line = words[n] + ' ';
+			y += metrics.height;
+		}
+		else
+		{
+			line = testLine;
+		}
+	}
+	this.fillText(line, x, y);
+};
+
+CanvasRenderingContext2D.prototype.measureText2 = function(text, maxWidth)
+{
+	var result = this.measureText(text);
+
+	var body = document.getElementsByTagName("body")[0];
+	var dummy = document.createElement("div");
+	var dummyText = document.createTextNode("M");
+	dummy.appendChild(dummyText);
+	dummy.setAttribute("style", "font: " + this.font + ";");
+	body.appendChild(dummy);
+	result.height = dummy.offsetHeight;
+	body.removeChild(dummy);
+
+	if (typeof maxWidth != 'undefined')
+	{
+		result.width = 0;
+		var words = text.split(' ');
+		var line = '';
+		var lines = 0;
+
+		for (var n = 0; n < words.length; n++)
+		{
+			var testLine = line + words[n] + ' ';
+			var metrics = this.measureText2(testLine);
+			var testWidth = metrics.width;
+			if (testWidth > maxWidth)
+			{
+				lines++;
+				line = words[n] + ' ';
+				if (testWidth > result.width)
+				{
+					result.width = testWidth;
+				}
+			}
+			else
+			{
+				line = testLine;
+			}
+		}
+		if (line.length > 0)
+		{
+			lines++;
+		}
+		result.height *= lines;
+		result.lines = lines;
+	}
+	return result;
+};

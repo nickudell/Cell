@@ -37,22 +37,13 @@ function MainMenu(title, controls)
 
 	var centerX = CANVAS_WIDTH / 2;
 	var centerY = this.titleHeight + 96;
-	var controlWidth = 320;
-	var controlHeight = 96;
-	var controlMargin = 32;
-	var controlFill = 'FFF'
-	var textFill = '444';
 
 	//position controls
 	this.controls.forEach(function(control)
 	{
-		control.x = centerX - controlWidth / 2;
-		control.y = centerY - controlHeight / 2;
-		control.height = controlHeight;
-		control.width = controlWidth;
-		control.background = controlFill;
-		control.foreground = textFill;
-		centerY += controlHeight + controlMargin;
+		control.x = centerX - control.width / 2;
+		control.y = centerY - control.height / 2;
+		centerY += control.height + control.margin;
 	});
 
 	this.clicked = function(e)
@@ -62,8 +53,10 @@ function MainMenu(title, controls)
 		{
 			if (control.hitTest(that._mousePos.x, that._mousePos.y))
 			{
-				handled |= control.click(that._mousePos);
-
+				if (typeof control.click == 'function')
+				{
+					handled |= control.click(that._mousePos);
+				}
 			}
 		});
 		if (handled)
