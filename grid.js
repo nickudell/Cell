@@ -1,31 +1,19 @@
-function Grid(x, y, difficulty)
+function Grid(x, y, width, height, difficulty)
 {
-	var world;
-	var level = 1;
-	var BOX_WIDTH = 640;
-	var BOX_HEIGHT = 640;
-	var BOX_MARGIN = 16;
+	this.world = [];
+	this.level = 1;
+	this.width = width || 640;
+	this.height = height || 640;
 	this.x = x || 0;
 	this.y = y || 0;
 
-	this.getWidth = function()
-	{
-		return BOX_WIDTH;
-	};
+	this.size = 0;
 
-	this.getHeight = function()
-	{
-		return BOX_HEIGHT;
-	};
-
-
-	var GRID_SIZE;
-
-	var CELL_MARGIN = 4;
+	this.cellMargin = 4;
 
 	var COLOURS = [[255, 0, 0],
                     [255, 128, 0],
-                    [128, 64, 0],
+                    [160, 96, 0],
                     [64, 150, 0],
                     [0, 255, 64],
                     [0, 255, 255],
@@ -35,213 +23,224 @@ function Grid(x, y, difficulty)
                     [255, 0, 255],
                     ];
 
-	var GRID_COLOURS;
+	this.colours = [];
 	switch (difficulty)
 	{
 		case 0:
 			//easy
-			GRID_COLOURS = [COLOURS[0], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8]];
-			GRID_SIZE = 8;
+			this.colours = [COLOURS[0], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8]];
+			this.size = 8;
 			break;
 		case 1:
 			//medium
-			GRID_COLOURS = [COLOURS[0], COLOURS[1], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8], COLOURS[9]];
-			var GRID_SIZE = 16;
+			this.colours = [COLOURS[0], COLOURS[1], COLOURS[2], COLOURS[3], COLOURS[6], COLOURS[8], COLOURS[9]];
+			this.size = 16;
 			showChecks = false;
 			break;
 		case 2:
 			//hard
-			GRID_COLOURS = COLOURS;
-			CELL_MARGIN = 2;
-			var GRID_SIZE = 32;
+			this.colours = COLOURS;
+			this.cellMargin = 2;
+			this.size = 32;
 			showChecks = false;
 			showOptions = false;
 			break;
 	}
 
-	this.buildWorld = function()
+	var that = this;
+
+	this.buildWorld();
+}
+
+Grid.prototype.buildWorld = function()
+{
+	var solution = [];
+	//try to build a solved level, then add random extra data to make it harder
+	for (var i = 0; i < this.size; i++)
 	{
-		var solution = [];
-		//try to build a solved level, then add random extra data to make it harder
-		for (var i = 0; i < GRID_SIZE; i++)
+		solution.push([]);
+		for (var j = 0; j < this.size; j++)
 		{
-			solution.push([]);
-			for (var j = 0; j < GRID_SIZE; j++)
-			{
-				solution[i].push(-1);
-			}
+			solution[i].push(-1);
 		}
-		//now work out from there
-		for (var x = 0; x < GRID_SIZE; x++)
+	}
+	//now work out from there
+	for (var x = 0; x < this.size; x++)
+	{
+		for (var y = 0; y < this.size; y++)
 		{
-			for (var y = 0; y < GRID_SIZE; y++)
+			var allowedColours;
+			if (x - 1 < 0)
 			{
-				var allowedColours;
-				if (x - 1 < 0)
+				if (y - 1 < 0)
 				{
-					if (y - 1 < 0)
-					{
-						//First block is set to a random colour
-						allowedColours = [Math.floor(Math.random() * GRID_COLOURS.length)];
-					}
-					else
-					{
-						//Only have top for reference
-						var same = solution[x][y - 1];
-						var up = loop(same, 1, GRID_COLOURS.length);
-						var down = loop(same, -1, GRID_COLOURS.length);
-						allowedColours = [same, up, down];
-					}
+					//First block is set to a random colour
+					allowedColours = this.colours.pick();
 				}
 				else
 				{
-					if (y - 1 < 0)
+					//Only have top for reference
+					var same = solution[x][y - 1];
+					var up = Math.loop(same, 1, this.colours.length);
+					var down = Math.loop(same, -1, this.colours.length);
+					allowedColours = [same, up, down];
+				}
+			}
+			else
+			{
+				if (y - 1 < 0)
+				{
+					//Only have left for reference
+					var same = solution[x - 1][y];
+					var up = Math.loop(same, 1, this.colours.length);
+					var down = Math.loop(same, -1, this.colours.length);
+					allowedColours = [same, up, down];
+				}
+				else
+				{
+					//Have both for reference
+					var top = solution[x][y - 1];
+					var left = solution[x - 1][y];
+					if (top == left)
 					{
-						//Only have left for reference
-						var same = solution[x - 1][y];
-						var up = loop(same, 1, GRID_COLOURS.length);
-						var down = loop(same, -1, GRID_COLOURS.length);
-						allowedColours = [same, up, down];
+						var up = Math.loop(top, 1, this.colours.length);
+						var down = Math.loop(top, -1, this.colours.length);
+						allowedColours = [top, up, down];
 					}
 					else
 					{
-						//Have both for reference
-						var top = solution[x][y - 1];
-						var left = solution[x - 1][y];
-						if (top == left)
+						//find the colours in common to the two surrounding colours
+						var up1 = Math.loop(top, 1, this.colours.length);
+						var down1 = Math.loop(top, -1, this.colours.length);
+						var up2 = Math.loop(left, 1, this.colours.length);
+						var down2 = Math.loop(left, -1, this.colours.length);
+						allowedColours = [];
+						if (up1 == left || up1 == down2)
 						{
-							var up = loop(top, 1, GRID_COLOURS.length);
-							var down = loop(top, -1, GRID_COLOURS.length);
-							allowedColours = [top, up, down];
+							allowedColours.push(up1);
 						}
-						else
+						if (down1 == left || down1 == up2)
 						{
-							//find the colours in common to the two surrounding colours
-							var up1 = loop(top, 1, GRID_COLOURS.length);
-							var down1 = loop(top, -1, GRID_COLOURS.length);
-							var up2 = loop(left, 1, GRID_COLOURS.length);
-							var down2 = loop(left, -1, GRID_COLOURS.length);
-							allowedColours = [];
-							if (up1 == left || up1 == down2)
-							{
-								allowedColours.push(up1);
-							}
-							if (down1 == left || down1 == up2)
-							{
-								allowedColours.push(down1);
-							}
-							if (top == up2 || top == down2)
-							{
-								allowedColours.push(top);
-							}
+							allowedColours.push(down1);
+						}
+						if (top == up2 || top == down2)
+						{
+							allowedColours.push(top);
 						}
 					}
 				}
-				var result = allowedColours[Math.floor(Math.random() * allowedColours.length)];
-				solution[x][y] = result;
 			}
-		}
-		world = [];
-		//Now that we have a solution, populate the level with random choices and pick one of them for our starting grid
-		for (var i = 0; i < GRID_SIZE; i++)
-		{
-			world.push([]);
-
-			for (var j = 0; j < GRID_SIZE; j++)
-			{
-				world[i].push(new cell(solution[i][j]));
-			}
-		}
-	};
-
-	this.draw = function()
-	{
-		var cellWidth = BOX_WIDTH / GRID_SIZE;
-		var cellHeight = BOX_HEIGHT / GRID_SIZE;
-
-		context.save();
-		context.shadowColor = 'rgba(0,0,0,0.25)';
-		context.shadowOffsetX = 16;
-		context.shadowOffsetY = 16;
-		context.shadowBlur = 32;
-		context.fillStyle = 'FFF';
-		context.fillRect(BOX_MARGIN, BOX_MARGIN, BOX_WIDTH, BOX_HEIGHT);
-		context.restore();
-
-		//draw cells
-		var begin = GRID_SIZE / 2 - level;
-		var end = GRID_SIZE / 2 + level;
-
-
-		for (var a = begin; a < end; a++)
-		{
-			for (var b = begin; b < end; b++)
-			{
-				var cell = world[a][b];
-				cell.draw(BOX_MARGIN + a * cellWidth,
-				BOX_MARGIN + b * cellHeight,
-				cellWidth,
-				cellHeight,
-				showSolution);
-			}
-		}
-	};
-
-	this.update = function(deltaTime)
-	{
-		if (completed())
-		{
-			level++;
+			var result = allowedColours.pick();
+			solution[x][y] = result;
 		}
 	}
-
-	this.getCell = function(mouseX, mouseY)
+	this.world = [];
+	//Now that we have a solution, populate the level with random choices and pick one of them for our starting grid
+	for (var i = 0; i < this.size; i++)
 	{
-		var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
-		var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
-		if (mouseX < this.x + (BOX_WIDTH / GRID_SIZE) * end && mouseX >= this.x + (BOX_WIDTH / GRID_SIZE) * begin && mouseY < this.y + (BOX_HEIGHT / GRID_SIZE) * end && mouseY >= this.y + (BOX_HEIGHT / GRID_SIZE) * begin)
-		{
-			var cellRow = Math.floor(((mouseX - BOX_MARGIN) / BOX_WIDTH) * GRID_SIZE);
-			var cellColumn = Math.floor(((mouseY - BOX_MARGIN) / BOX_HEIGHT) * GRID_SIZE);
-			return grid[cellRow][cellColumn];
-		}
-		else
-		{
-			return -1;
-		}
-	};
+		this.world.push([]);
 
-	function completed()
+		for (var j = 0; j < this.size; j++)
+		{
+			this.world[i].push(new Cell(solution[i][j], this.colours));
+		}
+	}
+};
+
+Grid.prototype.draw = function(showSolution)
+{
+	var cellWidth = this.width / this.size;
+	var cellHeight = this.height / this.size;
+
+	context.save();
+	context.shadowColor = 'rgba(0,0,0,0.25)';
+	context.shadowOffsetX = 16;
+	context.shadowOffsetY = 16;
+	context.shadowBlur = 32;
+	context.fillStyle = 'FFF';
+	context.fillRect(this.x, this.y, this.width, this.height);
+	context.restore();
+
+	//draw cells
+	var bounds = this.getBounds();
+
+
+	for (var a = bounds.begin; a < bounds.end; a++)
 	{
-		var begin = GRID_SIZE / 2 - Math.min(level, GRID_SIZE / 2);
-		var end = GRID_SIZE / 2 + Math.min(level, GRID_SIZE / 2);
+		for (var b = bounds.begin; b < bounds.end; b++)
+		{
+			var cell = this.world[a][b];
+			cell.draw(this.x + a * cellWidth + this.cellMargin,
+			this.y + b * cellHeight + this.cellMargin,
+			cellWidth - 2 * this.cellMargin,
+			cellHeight - 2 * this.cellMargin,
+			showSolution);
+		}
+	}
+};
+Grid.prototype.update = function(deltaTime)
+{
+	if (this._completed())
+	{
+		this.level++;
+	}
+}
 
-		var adjacents = [[-1, 0],
+Grid.prototype._completed = function()
+{
+	var bounds = this.getBounds();
+
+	var adjacents = [[-1, 0],
                         [1, 0],
                         [0, -1],
                         [0, 1]];
 
-		for (var x = begin; x < end; x++)
+	for (var x = bounds.begin; x < bounds.end; x++)
+	{
+		for (var y = bounds.begin; y < bounds.end; y++)
 		{
-			for (var y = begin; y < end; y++)
+			var cell = this.world[x][y];
+			for (var i = 0; i < adjacents.length; i++)
 			{
-				var cell = grid[x][y];
-				for (var i = 0; i < adjacents.length; i++)
+				var x2 = x + adjacents[i][0];
+				var y2 = y + adjacents[i][1];
+				if (x2 >= bounds.begin && y2 >= bounds.begin && x2 < bounds.end && y2 < bounds.end)
 				{
-					var x2 = x + adjacents[i][0];
-					var y2 = y + adjacents[i][1];
-					if (x2 >= begin && y2 >= begin && x2 < end && y2 < end)
+					//Check if adjacent block follows the rules
+					var cell2 = this.world[x2][y2];
+					if (!(Math.loop(cell2.value, 1, this.colours.length) == cell.value || Math.loop(cell2.value, -1, this.colours.length) == cell.value || cell2.value == cell.value))
 					{
-						//Check if adjacent block follows the rules
-						var cell2 = world[x2][y2];
-						if (!(loop(cell2.value, 1, GRID_COLOURS.length) == cell.value || loop(cell2.value, -1, GRID_COLOURS.length) == cell.value || cell2.value == cell.value))
-						{
-							return false;
-						}
+						return false;
 					}
 				}
-			}
+			};
 		}
-		return true;
 	}
+
+	return true;
 }
+
+Grid.prototype.getBounds = function()
+{
+	var begin = this.size / 2 - Math.min(this.level, this.size / 2);
+	var end = this.size / 2 + Math.min(this.level, this.size / 2);
+	return {
+		begin: begin,
+		end: end
+	};
+}
+
+Grid.prototype.getCell = function(mouseX, mouseY)
+{
+	var bounds = this.getBounds();
+	if (mouseX < this.x + (this.width / this.size) * bounds.end && mouseX >= this.x + (this.width / this.size) * bounds.begin && mouseY < this.y + (this.height / this.size) * bounds.end && mouseY >= this.y + (this.height / this.size) * bounds.begin)
+	{
+		var cellRow = Math.floor(((mouseX - this.x) / this.width) * this.size);
+		var cellColumn = Math.floor(((mouseY - this.y) / this.height) * this.size);
+		return this.world[cellRow][cellColumn];
+	}
+	else
+	{
+		return -1;
+	}
+};
