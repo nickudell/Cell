@@ -1,9 +1,13 @@
-function MainMenu(title, controls)
+function MainMenu(controls,title)
 {
 	this.titleHeight = 192;
 	this.title = title || "";
 
 	this.controls = controls || [];
+	if (typeof this.controls.forEach == 'undefined')
+	{
+		this.controls = [this.controls];
+	}
 
 	this._prevTime = Date.now();
 	this._loopTimeout = null;
@@ -17,8 +21,8 @@ function MainMenu(title, controls)
 
 	//create background gradient
 	this.background = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-	this.background.addColorStop(0, '005');
-	this.background.addColorStop(1, '05F');
+	this.background.addColorStop(0, '#000055');
+	this.background.addColorStop(1, '#0055FF');
 
 	this.loop = function()
 	{
@@ -32,24 +36,30 @@ function MainMenu(title, controls)
 		that.update(deltaTime);
 		that.draw();
 
-		that._loopTimeout = setTimeout(MainMenu.prototype.loop, 1000 / FPS);
+		that._loopTimeout = setTimeout(that.loop, 1000 / FPS);
 	};
 
 	var centerX = CANVAS_WIDTH / 2;
-	var centerY = this.titleHeight + 96;
+	var centerY = (this.titleHeight);
 
 	//position controls
 	this.controls.forEach(function(control)
 	{
 		control.x = centerX - control.width / 2;
-		control.y = centerY - control.height / 2;
+		control.y = centerY;
 		centerY += control.height + control.margin;
+		//if we've moved a panel, rearrange it.
+		if (typeof control.arrange != 'undefined')
+		{
+			control.arrange();
+		}
 	});
 
-	this.clicked = function(e)
+	this.clicked = function(event)
 	{
 		var handled = false;
-		controls.forEach(function(control)
+		var that = event.data;
+		that.controls.forEach(function(control)
 		{
 			if (control.hitTest(that._mousePos.x, that._mousePos.y))
 			{
@@ -61,31 +71,30 @@ function MainMenu(title, controls)
 		});
 		if (handled)
 		{
-			e.stopPropagation();
+			event.stopPropagation();
 		}
 	};
 
-	this.mouseMoved = function(e)
+	this.mouseMoved = function(event)
 	{
-		that._mousePos.x = e.offsetX;
-		that._mousePos.y = e.offsetY;
+		var that = event.data;
+		that._mousePos = getRelativePosition(event.pageX,event.pageY);
 	};
 
-	this.registerEvents(canvas);
-
+	this.registerEvents("#game");
 };
 
 MainMenu.prototype.stop = function()
 {
 	clearTimeout(this._loopTimeout);
-	this.deregisterEvents(canvas);
+	this.deregisterEvents("#game");
 };
 
 MainMenu.prototype.draw = function()
 {
 	//draw the title
 	context.save();
-	context.fillStyle = 'FFF';
+	context.fillStyle = '#FFFFFF';
 	context.textAlign = "center";
 	context.font = "78pt Open Sans Condensed";
 	context.fillText(this.title, CANVAS_WIDTH / 2, 3 * this.titleHeight / 4);
@@ -100,14 +109,15 @@ MainMenu.prototype.draw = function()
 
 MainMenu.prototype.registerEvents = function(target)
 {
-	target.addEventListener('click', this.clicked, true);
-	target.addEventListener('mousemove', this.mouseMoved, true);
+	var that = this;
+	$(target).bind('click',this,this.clicked);
+	$(target).bind('mousemove',this,this.mouseMoved);
 }
 
 MainMenu.prototype.deregisterEvents = function(target)
 {
-	target.removeEventListener('click', this.clicked, true);
-	target.removeEventListener('mousemove', this.mouseMoved, true);
+	$(target).unbind('click',this.clicked);
+	$(target).unbind('mousemove',this.mouseMoved);
 }
 
 MainMenu.prototype.update = function(deltaTime)
