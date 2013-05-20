@@ -87,7 +87,15 @@ function gameStart(difficulty)
 		mouse.y = e.offsetY;
 		mouse.currentCell = grid.getCell(mouse.x, mouse.y);
 	});*/
+	
 		$('#game').bind('click',this,canvasClicked);
+		var hammertime = $('#game').hammer();
+		hammertime.on("tap",canvasClicked);
+		hammertime.on("touch",function()
+			{
+				mouse = getRelativePosition(e.center.pageX,e.center.pageY);
+				mouse.currentCell = grid.getCell(mouse.x, mouse.y);
+			});
 	$('#game').bind('mousemove',function(event)
 	{
 		mouse = getRelativePosition(event.pageX,event.pageY);
@@ -302,6 +310,12 @@ function awaitAssets()
 	}
 };
 
+function canvasTapped(e)
+{
+	mouse = getRelativePosition(e.center.pageX,e.center.pageY);
+	mouse.currentCell = grid.getCell(mouse.x, mouse.y);
+	canvasClicked(e);
+}
 
 
 function canvasClicked(e)
