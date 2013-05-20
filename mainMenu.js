@@ -55,8 +55,18 @@ function MainMenu(controls,title)
 		}
 	});
 
-	this.clicked = function(event)
+	this.registerEvents("#game");
+};
+
+MainMenu.prototype.stop = function()
+{
+	clearTimeout(this._loopTimeout);
+	this.deregisterEvents("#game");
+};
+
+MainMenu.prototype.clicked = function(event)
 	{
+		console.log("Tap fired");
 		var handled = false;
 		var that = event.data;
 		that.controls.forEach(function(control)
@@ -75,20 +85,11 @@ function MainMenu(controls,title)
 		}
 	};
 
-	this.mouseMoved = function(event)
+MainMenu.prototype.mouseMoved = function(event)
 	{
 		var that = event.data;
 		that._mousePos = getRelativePosition(event.pageX,event.pageY);
 	};
-
-	this.registerEvents("#game");
-};
-
-MainMenu.prototype.stop = function()
-{
-	clearTimeout(this._loopTimeout);
-	this.deregisterEvents("#game");
-};
 
 MainMenu.prototype.draw = function()
 {
@@ -106,18 +107,41 @@ MainMenu.prototype.draw = function()
 		control.draw(context);
 	})
 }
+MainMenu.prototype.touched = function(e)
+			{
+				console.log("Touch fired");
+				e.data._mousePos = getRelativePosition(e.gesture.center.pageX,e.gesture.center.pageY);
+			}
 
 MainMenu.prototype.registerEvents = function(target)
 {
 	var that = this;
+	//Workaround for the fact that hammer.js does not allow additional parameters
+	this._funcClick= function(e)
+	{
+		e.data = that;
+		that.clicked(e);
+	};
+	this._funcTouch = function(e)
+	{
+		e.data = that;
+		that.touched(e)
+	};
+
 	$(target).bind('click',this,this.clicked);
 	$(target).bind('mousemove',this,this.mouseMoved);
+	var hammertime = $(target).hammer();
+		hammertime.on("tap",this._funcClick);
+		hammertime.on("touch",this._funcTouch);
 }
 
 MainMenu.prototype.deregisterEvents = function(target)
 {
 	$(target).unbind('click',this.clicked);
 	$(target).unbind('mousemove',this.mouseMoved);
+	var hammertime = $(target).hammer();
+		hammertime.off("tap",this._funcClick);
+		hammertime.off("touch",this._funcTouch);
 }
 
 MainMenu.prototype.update = function(deltaTime)

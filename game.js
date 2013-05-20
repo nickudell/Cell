@@ -13,7 +13,7 @@ var context;
 //Game loop properties
 var loopTimeout;
 var isPlaying = true;
-var FPS = 20;
+var FPS = 50;
 var prevTime = Date.now();
 
 var timeString;
@@ -80,20 +80,14 @@ function gameStart(difficulty)
 	menu.stop();
 	//initialise a new game
 	grid = new Grid(GRID_MARGIN, GRID_MARGIN, GRID_WIDTH, GRID_HEIGHT, difficulty);
-	/*canvas.addEventListener('click', canvasClicked, true); //add non-menu click event listener
-	canvas.addEventListener('mousemove', function(e)
-	{
-		mouse.x = e.offsetX;
-		mouse.y = e.offsetY;
-		mouse.currentCell = grid.getCell(mouse.x, mouse.y);
-	});*/
 	
 		$('#game').bind('click',this,canvasClicked);
 		var hammertime = $('#game').hammer();
 		hammertime.on("tap",canvasClicked);
-		hammertime.on("touch",function()
+		hammertime.on("touch",function(e)
 			{
-				mouse = getRelativePosition(e.center.pageX,e.center.pageY);
+				console.log("touch fired.");
+				mouse = getRelativePosition(e.gesture.center.pageX,e.gesture.center.pageY);
 				mouse.currentCell = grid.getCell(mouse.x, mouse.y);
 			});
 	$('#game').bind('mousemove',function(event)
@@ -310,16 +304,10 @@ function awaitAssets()
 	}
 };
 
-function canvasTapped(e)
-{
-	mouse = getRelativePosition(e.center.pageX,e.center.pageY);
-	mouse.currentCell = grid.getCell(mouse.x, mouse.y);
-	canvasClicked(e);
-}
-
 
 function canvasClicked(e)
 {
+	console.log("tap fired");
 	//Get which cell was clicked
 	var cell = mouse.currentCell;
 	//check that a cell has been clicked
