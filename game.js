@@ -81,7 +81,7 @@ function gameStart(difficulty)
 	//initialise a new game
 	grid = new Grid(GRID_MARGIN, GRID_MARGIN, GRID_WIDTH, GRID_HEIGHT, difficulty);
 	
-		$('#game').bind('click',this,canvasClicked);
+		//$('#game').bind('click',this,canvasClicked);
 		var hammertime = $('#game').hammer();
 		hammertime.on("tap",canvasClicked);
 		hammertime.on("touch",function(e)
