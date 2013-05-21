@@ -31,8 +31,7 @@ Cell.prototype.draw = function(x, y, width, height, solution)
 	context.shadowOffsetY = 4;
 	context.shadowBlur = 8;
 
-	var colour = solution ? this.solution : this.value;
-	context.fillStyle = this.getFillStyle(this._colours[colour],
+	context.fillStyle = this.getFillStyle(solution,
 	x + width / 2,
 	y + height / 2,
 	width);
@@ -51,19 +50,17 @@ Cell.prototype.draw = function(x, y, width, height, solution)
 	}
 	context.restore();
 };
-Cell.prototype.getFillStyle = function(colour, x, y, width, height)
+Cell.prototype.getFillStyle = function(solution, x, y, width, height)
 {
-	var delta = 32;
+	var colour = solution? this._colours[this.solution]:this._colours[this.value];
+	var delta = 48;
 	var lighter = extend(colour);
 	var darker = extend(colour);
-	lighter.forEach(function(colour)
+	for(var i =0;i<3;i++)
 	{
-		colour = Math.min(colour + delta, 255);
-	});
-	darker.forEach(function(colour)
-	{
-		colour = Math.max(colour - delta, 0);
-	});
+		lighter[i] = Math.min(lighter[i]+ delta, 255);
+		darker[i] = Math.max(darker[i] - delta, 0);
+	}
 
 	var grd = context.createRadialGradient(x, y, 1, x, y, width);
 	grd.addColorStop(0, getColour(lighter));
