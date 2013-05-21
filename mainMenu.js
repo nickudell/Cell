@@ -128,7 +128,7 @@ MainMenu.prototype.registerEvents = function(target)
 		that.touched(e)
 	};
 
-	$(target).bind('click',this,this.clicked);
+	//$(target).bind('click',this,this.clicked);
 	$(target).bind('mousemove',this,this.mouseMoved);
 	var hammertime = $(target).hammer();
 		hammertime.on("tap",this._funcClick);
@@ -137,7 +137,7 @@ MainMenu.prototype.registerEvents = function(target)
 
 MainMenu.prototype.deregisterEvents = function(target)
 {
-	$(target).unbind('click',this.clicked);
+	//$(target).unbind('click',this.clicked);
 	$(target).unbind('mousemove',this.mouseMoved);
 	var hammertime = $(target).hammer();
 		hammertime.off("tap",this._funcClick);
