@@ -1,3 +1,8 @@
+/**
+ * Enumerated animation states for controls
+ * @type {Object}
+ * @enum {number}
+ */
 var CONTROL_STATES = Object.freeze(
 {
 	IDLE: 0,
@@ -5,13 +10,34 @@ var CONTROL_STATES = Object.freeze(
 	PRESSED: 2
 });
 
+/**
+ * Base class for all controls. Handles rendering a box and animation states.
+ * @constructor
+ * @param {number} x          The x coordinate of the top left point of the control
+ * @param {number} y          The y coordinate of the top left point of the control
+ * @param {number} width      The width of the control
+ * @param {number} height     The height of the control
+ * @param {Object} [background] The fillstyle to apply to the background of the object. If no background is supplied, no background is drawn.
+ * @param {Object} [border]     The fillstyle to apply to the border of the object. If no border is supplied, no border is drawn.
+ * @param {number} margin     The amount of distance between this control and surrounding or parent controls
+ */
+
 function Control(x, y, width, height, background, border, margin)
 {
 	this.x = x || 0;
 	this.y = y || 0;
 	this.width = width || 0;
 	this.height = height || 0;
-	this.background = background || '#FFFFFF';
+	if (background)
+	{
+		this.background = background;
+		this.drawBackground = true;
+	}
+	else
+	{
+		this.drawBackground = false;
+	}
+
 	this.border = border || '#000000';
 	this.margin = margin || 0;
 
@@ -19,6 +45,11 @@ function Control(x, y, width, height, background, border, margin)
 	this._msSinceClick = 0;
 	this._msSinceHover = 0;
 };
+/**
+ * Handles mouse position updates
+ * @param  {number} mouseX The x coordinate of the mouse cursor
+ * @param  {number} mouseY The y coordinate of the mouse cursor
+ */
 Control.prototype.mouseMoved = function(mouseX, mouseY)
 {
 	if (this.hitTest(mouseX, mouseY))
@@ -32,6 +63,10 @@ Control.prototype.mouseMoved = function(mouseX, mouseY)
 		this.state = CONTROL_STATES.IDLE;
 	}
 };
+/**
+ * Runs animations for control state changes.
+ * @param  {number} deltaTime The amount of time passed since last update call, in milliseconds.
+ */
 Control.prototype.update = function(deltaTime)
 {
 	//Put animations here for hovering, etc.
@@ -44,11 +79,20 @@ Control.prototype.update = function(deltaTime)
 		this._msSinceHover += deltaTime;
 	}
 };
+/**
+ * Checks if mouse position is inside the control
+ * @param  {number} mouseX The x coordinate of the mouse cursor.
+ * @param  {number} mouseY The y coordinate of the mouse cursor.
+ * @return {boolean}        True if mouseX and mouseY are inside the bounds of the control, else false.
+ */
 Control.prototype.hitTest = function(mouseX, mouseY)
 {
 	return (mouseX >= this.x && mouseX <= this.x + this.width && mouseY >= this.y && mouseY <= this.y + this.height);
 };
-//draw the box around the control
+/**
+ * Draws the control as a rectangle with optional background and border
+ * @param  {CanvasRenderingContext2D} context The canvas context to draw to
+ */
 Control.prototype.draw = function(context)
 {
 	context.save();
@@ -64,8 +108,23 @@ Control.prototype.draw = function(context)
 	context.strokeRect(this.x, this.y, this.width, this.height);
 	context.restore();
 };
+/**
+ * A class that contains text printing functions
+ * @constructor
+ * @param {string} text       The text to print on the control
+ * @param {string} [font]       The font style and size to apply to the text
+ * @param {number} textHeight Estimated height of a line of text
+ * @param {Object} [foreground] The fill style to apply to the text
+ * @param {number} x          The x coordinate of the top-left corner of the control.
+ * @param {number} y          The y coordinate of the top-left corner of the control.
+ * @param {number} width      The width of the control
+ * @param {number} height     The height of the control
+ * @param {Object} [background] The fill style to apply to the background of the control.
+ * @param {Object} [border]     The fill style to apply to the border of the control
+ * @param {number} margin     The space between this control and surrounding or parent controls
+ */
 
-function Label(text,font,textHeight,foreground,x, y, width, height, background, border, margin)
+function Label(text, font, textHeight, foreground, x, y, width, height, background, border, margin)
 {
 	Control.call(this, x, y, width, height, background, border, margin);
 	this.text = text || "";
@@ -75,6 +134,10 @@ function Label(text,font,textHeight,foreground,x, y, width, height, background, 
 };
 Label.prototype = Object.create(Control.prototype);
 Label.prototype.constructor = Label;
+/**
+ * Draw the label
+ * @param  {CanvasRenderingContext2D} context The canvas rendering context to draw to.
+ */
 Label.prototype.draw = function(context)
 {
 	Control.prototype.draw.call(this, context);
@@ -83,9 +146,9 @@ Label.prototype.draw = function(context)
 	context.textAlign = "center";
 	context.font = this.font;
 	context.textBaseline = 'middle';
-	this.metrics = context.measureText2(this.text, this.width,this.textHeight);
+	this.metrics = helpr.measureText(context, this.text, this.width, this.textHeight);
 	var x = this.x + this.width / 2;
-	var y = this.y + this.height / 2 - (this.metrics.height * (this.metrics.lines.length-1)) / 2;
+	var y = this.y + this.height / 2 - (this.metrics.height * (this.metrics.lines.length - 1)) / 2;
 	var that = this;
 	this.metrics.lines.forEach(function(line)
 	{
@@ -95,39 +158,94 @@ Label.prototype.draw = function(context)
 	context.restore();
 };
 
-function Button(delegate, text,font,textHeight,foreground,x, y, width, height, background, border, margin)
+/**
+ * Renders text and handles click and touch events
+ * @constructor
+ * @param {Function} [delegate]   The function to call when the user clicks or touches this button
+ * @param {string} [text]       The text to display on this button
+ ** @param {string} [font]       The font style and size to apply to the text
+ * @param {number} textHeight Estimated height of a line of text
+ * @param {Object} [foreground] The fill style to apply to the text
+ * @param {number} x          The x coordinate of the top-left corner of the control.
+ * @param {number} y          The y coordinate of the top-left corner of the control.
+ * @param {number} width      The width of the control
+ * @param {number} height     The height of the control
+ * @param {Object} [background] The fill style to apply to the background of the control.
+ * @param {Object} [border]     The fill style to apply to the border of the control
+ * @param {number} margin     The space between this control and surrounding or parent controls
+ */
+
+function Button(delegate, text, font, textHeight, foreground, x, y, width, height, background, border, margin)
 {
-	Label.call(this, text,font,textHeight,foreground,x, y, width, height, background, border, margin);
-	this.delegate = delegate || {};
+	Label.call(this, text, font, textHeight, foreground, x, y, width, height, background, border, margin);
+	this.delegate = delegate ||
+	{};
 }
 Button.prototype = Object.create(Label.prototype);
 Button.prototype.constructor = Button;
+/**
+ * Executes this button's click delegate
+ * @return {boolean} True if this button handled the click event, else false.
+ */
 Button.prototype.click = function()
 {
 	if (this.delegate)
 	{
 		this.delegate();
+		return true;
 	}
-	return true;
+	return false;
 };
+
+/**
+ * Renders images
+ * @constructor
+ * @param {Image} image      The image to draw
+ * @param {number} x          The x coordinate of the top-left corner of the control
+ * @param {number} y          The y coordinate of the top-left corner of the control
+ * @param {number} width      The width of the control
+ * @param {number} height     The height of the control
+ * @param {Object} background The fill style of the control's background
+ * @param {Object} border     The fill style of the control's border
+ * @param {number} margin     The space between this control and parent or sibling controls.
+ */
 
 function Graphic(image, x, y, width, height, background, border, margin)
 {
 	Control.call(this, x, y, width, height, background, border, margin);
-	this.image = image || {};
+	this.image = image ||
+	{};
 }
 Graphic.prototype = Object.create(Control.prototype);
 Graphic.prototype.constructor = Graphic;
+/**
+ * Renders the graphic
+ * @param  {CanvasRenderingContext2D} context The canvas rendering context to draw to
+ */
 Graphic.prototype.draw = function(context)
 {
 
 	Control.prototype.draw.call(this, context);
 	context.drawImage(this.image,
-	this.x,
-	this.y,
-	this.width,
-	this.height);
+		this.x,
+		this.y,
+		this.width,
+		this.height);
 }
+
+/**
+ * Layout panel that presents an array of controls as a vertical or horizontal list
+ * @constructor
+ * @param {Array} controls   The controls this panel will hold
+ * @param {boolean} horizontal Whether this panel should lay the controls out horizontally or vertically
+ * @param {number} x          The x coordinate of the top-left corner of the control
+ * @param {number} y          The y coordinate of the top-left corner of the control
+ * @param {number} width      The width of the control
+ * @param {number} height     The height of the control
+ * @param {Object} background The fill style of the control's background
+ * @param {Object} border     The fill style of the control's border
+ * @param {number} margin     The space between this control and parent or sibling controls.
+ */
 
 function Stack(controls, horizontal, x, y, width, height, background, border, margin)
 {
@@ -138,6 +256,9 @@ function Stack(controls, horizontal, x, y, width, height, background, border, ma
 }
 Stack.prototype = Object.create(Control.prototype);
 Stack.prototype.constructor = Stack;
+/**
+ * Rearrange the contents of the panel. Call this after adding or removing items to the controls array
+ */
 Stack.prototype.arrange = function()
 {
 	var that = this;
@@ -165,6 +286,10 @@ Stack.prototype.arrange = function()
 		});
 	}
 };
+/**
+ * Render the panel and containing controls
+ * @param  {CanvasRenderingContext2D} context The canvas rendering context to draw the panel to
+ */
 Stack.prototype.draw = function(context)
 {
 	//draw background
@@ -174,6 +299,10 @@ Stack.prototype.draw = function(context)
 		control.draw(context);
 	});
 };
+/**
+ * Update the contained controls and the animation state of the panel
+ * @param  {number} deltaTime How many milliseconds have passed since the last update.
+ */
 Stack.prototype.update = function(deltaTime)
 {
 	Control.prototype.update.call(this, deltaTime);
@@ -181,7 +310,11 @@ Stack.prototype.update = function(deltaTime)
 	{
 		control.update(deltaTime);
 	});
-}
+};
+/**
+ * Handle click events on this control. Fire click events on controls in this panel
+ * @param  {Object} mouse Mouse x and y positions
+ */
 Stack.prototype.click = function(mouse)
 {
 	var handled = false;
@@ -195,11 +328,23 @@ Stack.prototype.click = function(mouse)
 			}
 		}
 	});
-	if (handled)
-	{
-		e.stopPropagation();
-	}
 };
+
+/**
+ * Layout panel that presents a Stack that scrolls its contents
+ * @param {Array} controls   The controls this panel will hold
+ * @param {boolean} horizontal Whether this panel should lay the controls out horizontally or vertically
+ * @param {number} speed          How quickly the scroll stack scrolls
+ * @param {boolean} loop           Whether the scroll stack should loop controls or just scroll them once
+ * @param {boolean} startOffscreen Whether the scroll stack should start with the controls off the screen
+ * @param {number} x          The x coordinate of the top-left corner of the control
+ * @param {number} y          The y coordinate of the top-left corner of the control
+ * @param {number} width      The width of the control
+ * @param {number} height     The height of the control
+ * @param {Object} background The fill style of the control's background
+ * @param {Object} border     The fill style of the control's border
+ * @param {number} margin     The space between this control and parent or sibling controls.
+ */
 
 function ScrollStack(controls, horizontal, speed, loop, startOffscreen, x, y, width, height, background, border, margin)
 {
@@ -210,6 +355,9 @@ function ScrollStack(controls, horizontal, speed, loop, startOffscreen, x, y, wi
 }
 ScrollStack.prototype = Object.create(Stack.prototype);
 ScrollStack.prototype.constructor = ScrollStack;
+/**
+ * Rearrange the contents of the panel. Call this after adding or removing items to the controls array
+ */
 ScrollStack.prototype.arrange = function()
 {
 	//arrange using typical system
@@ -230,6 +378,10 @@ ScrollStack.prototype.arrange = function()
 		})
 	}
 }
+/**
+ * Update the panel and the panel's controls and move the scrolling controls
+ * @param  {number} deltaTime The number of milliseconds that have passed since the last update
+ */
 ScrollStack.prototype.update = function(deltaTime)
 {
 	//move each control by the speed * deltaTime in pixels/millisecond
@@ -262,15 +414,19 @@ ScrollStack.prototype.update = function(deltaTime)
 			control.y -= that.speed * deltaTime;
 			if (control.y < that.y - control.height)
 			{
-				control.y = control.y - (that.y - control.height)+ furthest + control.margin;
+				control.y = control.y - (that.y - control.height) + furthest + control.margin;
 				furthest = control.y + control.height;
 			}
 		}
 	});
 }
+/**
+ * Draw this panel and the panel's controls
+ * @param  {CanvasRenderingContext2D} context The context to render to
+ */
 ScrollStack.prototype.draw = function(context)
 {
-	Control.prototype.draw.call(this,context);
+	Control.prototype.draw.call(this, context);
 	context.save();
 	context.beginPath();
 	context.moveTo(this.x, this.y);

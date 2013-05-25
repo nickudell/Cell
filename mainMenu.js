@@ -1,4 +1,4 @@
-function MainMenu(controls,title)
+function MainMenu(controls, title, background)
 {
 	this.titleHeight = 192;
 	this.title = title || "";
@@ -20,13 +20,10 @@ function MainMenu(controls,title)
 	var that = this;
 
 	//create background gradient
-	this.background = context.createLinearGradient(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-	this.background.addColorStop(0, '#000055');
-	this.background.addColorStop(1, '#0055FF');
+	this.background = background || 'black';
 
 	this.loop = function()
 	{
-		Clear(that.background);
 
 		//Update time difference
 		var now = Date.now();
@@ -65,34 +62,35 @@ MainMenu.prototype.stop = function()
 };
 
 MainMenu.prototype.clicked = function(event)
+{
+	console.log("Tap fired");
+	var handled = false;
+	var that = event.data;
+	that.controls.forEach(function(control)
 	{
-		console.log("Tap fired");
-		var handled = false;
-		var that = event.data;
-		that.controls.forEach(function(control)
+		if (control.hitTest(that._mousePos.x, that._mousePos.y))
 		{
-			if (control.hitTest(that._mousePos.x, that._mousePos.y))
+			if (typeof control.click == 'function')
 			{
-				if (typeof control.click == 'function')
-				{
-					handled |= control.click(that._mousePos);
-				}
+				handled |= control.click(that._mousePos);
 			}
-		});
-		if (handled)
-		{
-			event.stopPropagation();
 		}
-	};
+	});
+	if (handled)
+	{
+		event.stopPropagation();
+	}
+};
 
 MainMenu.prototype.mouseMoved = function(event)
-	{
-		var that = event.data;
-		that._mousePos = getRelativePosition(event.pageX,event.pageY);
-	};
+{
+	var that = event.data;
+	that._mousePos = getRelativePosition(event.pageX, event.pageY);
+};
 
 MainMenu.prototype.draw = function()
 {
+	helpr.clear(context, this.background, CANVAS_WIDTH, CANVAS_HEIGHT);
 	//draw the title
 	context.save();
 	context.fillStyle = '#FFFFFF';
@@ -108,16 +106,16 @@ MainMenu.prototype.draw = function()
 	})
 }
 MainMenu.prototype.touched = function(e)
-			{
-				console.log("Touch fired");
-				e.data._mousePos = getRelativePosition(e.gesture.center.pageX,e.gesture.center.pageY);
-			}
+{
+	console.log("Touch fired");
+	e.data._mousePos = getRelativePosition(e.gesture.center.pageX, e.gesture.center.pageY);
+}
 
 MainMenu.prototype.registerEvents = function(target)
 {
 	var that = this;
 	//Workaround for the fact that hammer.js does not allow additional parameters
-	this._funcClick= function(e)
+	this._funcClick = function(e)
 	{
 		e.data = that;
 		that.clicked(e);
@@ -129,19 +127,23 @@ MainMenu.prototype.registerEvents = function(target)
 	};
 
 	//$(target).bind('click',this,this.clicked);
-	$(target).bind('mousemove',this,this.mouseMoved);
-	var hammertime = $(target).hammer();
-		hammertime.on("tap",this._funcClick);
-		hammertime.on("touch",this._funcTouch);
+	$(target)
+		.bind('mousemove', this, this.mouseMoved);
+	var hammertime = $(target)
+		.hammer();
+	hammertime.on("tap", this._funcClick);
+	hammertime.on("touch", this._funcTouch);
 }
 
 MainMenu.prototype.deregisterEvents = function(target)
 {
 	//$(target).unbind('click',this.clicked);
-	$(target).unbind('mousemove',this.mouseMoved);
-	var hammertime = $(target).hammer();
-		hammertime.off("tap",this._funcClick);
-		hammertime.off("touch",this._funcTouch);
+	$(target)
+		.unbind('mousemove', this.mouseMoved);
+	var hammertime = $(target)
+		.hammer();
+	hammertime.off("tap", this._funcClick);
+	hammertime.off("touch", this._funcTouch);
 }
 
 MainMenu.prototype.update = function(deltaTime)

@@ -6,22 +6,22 @@ function Grid(x, y, width, height, difficulty)
 	this.height = height || 640;
 	this.x = x || 0;
 	this.y = y || 0;
-
 	this.size = 0;
 
 	this.cellMargin = 4;
 
-	var COLOURS = [[255, 0, 0],
-                    [255, 128, 0],
-                    [160, 96, 0],
-                    [64, 150, 0],
-                    [0, 255, 64],
-                    [0, 255, 255],
-                    [0, 128, 255],
-                    [0, 0, 255],
-                    [128, 0, 255],
-                    [255, 0, 255],
-                    ];
+	var COLOURS = [
+		[255, 0, 0],
+		[255, 128, 0],
+		[160, 96, 0],
+		[64, 150, 0],
+		[0, 255, 64],
+		[0, 255, 255],
+		[0, 128, 255],
+		[0, 0, 255],
+		[128, 0, 255],
+		[255, 0, 255],
+	];
 
 	this.colours = [];
 	switch (difficulty)
@@ -75,7 +75,7 @@ Grid.prototype.buildWorld = function()
 				if (y - 1 < 0)
 				{
 					//First block is set to a random colour
-					allowedColours = this.colours.pick();
+					allowedColours = helpr.pick(this.colours);
 				}
 				else
 				{
@@ -130,7 +130,7 @@ Grid.prototype.buildWorld = function()
 					}
 				}
 			}
-			var result = allowedColours.pick();
+			var result = helpr.pick(allowedColours);
 			solution[x][y] = result;
 		}
 	}
@@ -164,17 +164,16 @@ Grid.prototype.draw = function(showSolution)
 	//draw cells
 	var bounds = this.getBounds();
 
-
 	for (var a = bounds.begin; a < bounds.end; a++)
 	{
 		for (var b = bounds.begin; b < bounds.end; b++)
 		{
 			var cell = this.world[a][b];
 			cell.draw(this.x + a * cellWidth + this.cellMargin,
-			this.y + b * cellHeight + this.cellMargin,
-			cellWidth - 2 * this.cellMargin,
-			cellHeight - 2 * this.cellMargin,
-			showSolution);
+				this.y + b * cellHeight + this.cellMargin,
+				cellWidth - 2 * this.cellMargin,
+				cellHeight - 2 * this.cellMargin,
+				showSolution);
 		}
 	}
 };
@@ -190,10 +189,12 @@ Grid.prototype._completed = function()
 {
 	var bounds = this.getBounds();
 
-	var adjacents = [[-1, 0],
-                        [1, 0],
-                        [0, -1],
-                        [0, 1]];
+	var adjacents = [
+		[-1, 0],
+		[1, 0],
+		[0, -1],
+		[0, 1]
+	];
 
 	for (var x = bounds.begin; x < bounds.end; x++)
 	{
